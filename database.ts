@@ -6,17 +6,19 @@ import { User } from './types';
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
-// Haqiqiy qiymat ekanligini tekshirish (faqat string bo'lsa va 'undefined' bo'lmasa)
-const isDefined = (val: any): val is string => {
-  return typeof val === 'string' && val.length > 10 && val !== 'undefined' && val !== 'null';
+// Haqiqiy qiymat ekanligini va "undefined" stringi emasligini tekshirish
+const isValid = (val: any): val is string => {
+  return typeof val === 'string' && val.length > 5 && val !== 'undefined' && val !== 'null';
 };
 
-export const supabase: SupabaseClient | null = (isDefined(supabaseUrl) && isDefined(supabaseKey)) 
+export const supabase: SupabaseClient | null = (isValid(supabaseUrl) && isValid(supabaseKey)) 
   ? createClient(supabaseUrl!, supabaseKey!) 
   : null;
 
 if (!supabase) {
-  console.warn("Supabase connection is not established. Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set correctly in Vercel.");
+  console.error("CRITICAL: Supabase keys are missing in the build!");
+  console.log("URL exists:", !!supabaseUrl);
+  console.log("Key exists:", !!supabaseKey);
 }
 
 export const db = {
