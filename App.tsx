@@ -13,7 +13,6 @@ import AuthPage from './pages/AuthPage';
 import SplashScreen from './components/SplashScreen';
 import AdminPanel from './pages/AdminPanel';
 import { db, supabase } from './database';
-import { Database, ShieldAlert, RefreshCcw } from 'lucide-react';
 
 const UNLOCK_COST = 200;
 
@@ -23,7 +22,6 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showSplash, setShowSplash] = useState(true);
-  const [showSetupBanner, setShowSetupBanner] = useState(!supabase);
 
   const [auth, setAuth] = useState<AuthState>(() => {
     const saved = localStorage.getItem('tg_current_session');
@@ -128,7 +126,6 @@ const App: React.FC = () => {
 
     await db.updateUserProgress(auth.currentUser.username, updatedProgress);
     
-    // Manual update for LocalStorage mode sync
     if (!supabase) {
       const updatedUser = { ...auth.currentUser, progress: updatedProgress };
       setAuth(prevAuth => ({ ...prevAuth, currentUser: updatedUser }));
@@ -148,17 +145,6 @@ const App: React.FC = () => {
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-rose-600 text-white px-8 py-4 rounded-2xl shadow-2xl font-black text-sm animate-in fade-in slide-in-from-top-4 flex items-center gap-3">
           <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
           {errorMessage}
-        </div>
-      )}
-
-      {/* Demo Mode Banner */}
-      {!supabase && showSetupBanner && (
-        <div className="bg-indigo-600 text-white py-2 px-4 flex items-center justify-between gap-4 relative z-[80]">
-           <div className="flex items-center gap-2 text-[10px] md:text-xs font-black uppercase tracking-widest">
-              <Database size={14} />
-              <span>Demo Mode: Data saved locally. Set up Supabase for Cloud Sync.</span>
-           </div>
-           <button onClick={() => setShowSetupBanner(false)} className="opacity-60 hover:opacity-100 font-bold text-xs uppercase tracking-widest">Hide</button>
         </div>
       )}
 

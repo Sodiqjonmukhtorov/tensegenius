@@ -10,28 +10,7 @@ const getAI = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-// Dars ichidagi yordamchi uchun streaming funksiyasi
-export async function* askGrammarAssistantStream(question: string, tense: string, lang: Language) {
-  try {
-    const ai = getAI();
-    const responseStream = await ai.models.generateContentStream({
-      model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: `Tense: ${tense}. Lang: ${lang}. Question: ${question}` }] }],
-      config: {
-        systemInstruction: "English tutor. Ultra-brief. Max 2 sentences. Direct answer.",
-        thinkingConfig: { thinkingBudget: 0 },
-        temperature: 0.1,
-      }
-    });
-    for await (const chunk of responseStream) {
-      if (chunk.text) yield chunk.text;
-    }
-  } catch (error) {
-    yield "Error.";
-  }
-}
-
-// Panda Chat uchun streaming
+// Panda Chat uchun streaming (Optimallashtirilgan)
 export async function* chatWithPandaStream(message: string, lang: Language) {
   try {
     const ai = getAI();
@@ -39,7 +18,7 @@ export async function* chatWithPandaStream(message: string, lang: Language) {
       model: 'gemini-3-flash-preview',
       contents: [{ role: 'user', parts: [{ text: message }] }],
       config: {
-        systemInstruction: "Panda tutor. Very fast. Brief. Helpful. No fluff.",
+        systemInstruction: "You are a very brief English Panda tutor. Max 20 words. Be helpful.",
         thinkingConfig: { thinkingBudget: 0 },
         temperature: 0.1,
       }
@@ -47,12 +26,37 @@ export async function* chatWithPandaStream(message: string, lang: Language) {
     for await (const chunk of responseStream) {
       if (chunk.text) yield chunk.text;
     }
-  } catch (error) {
-    yield "Error.";
+  } catch (error: any) {
+    if (error.message?.includes('429')) {
+      yield lang === 'uz' ? "Hozir bandman (Limit). 1 daqiqadan so'ng yozing... 🐾" : "I'm busy (Limit). Try in 1 min... 🐾";
+    } else {
+      yield lang === 'uz' ? "Xatolik yuz berdi. 🐾" : "Oops, an error occurred. 🐾";
+    }
   }
 }
 
-// Eski kodlar bilan moslik uchun (legacy)
+// Dars ichidagi yordamchi
+export async function* askGrammarAssistantStream(question: string, tense: string, lang: Language) {
+  try {
+    const ai = getAI();
+    const responseStream = await ai.models.generateContentStream({
+      model: 'gemini-3-flash-preview',
+      contents: [{ role: 'user', parts: [{ text: `Topic: ${tense}. Q: ${question}` }] }],
+      config: {
+        systemInstruction: "Brief English tutor. Max 2 sentences.",
+        thinkingConfig: { thinkingBudget: 0 },
+        temperature: 0.1,
+      }
+    });
+    for await (const chunk of responseStream) {
+      if (chunk.text) yield chunk.text;
+    }
+  } catch (error: any) {
+    yield error.message?.includes('429') ? "Limit reached." : "Error.";
+  }
+}
+
+// Qolgan funksiyalar (Legacy compatibility)
 export async function askGrammarAssistant(q: string, t: string, l: Language): Promise<string> {
   let text = "";
   for await (const chunk of askGrammarAssistantStream(q, t, l)) { text += chunk; }

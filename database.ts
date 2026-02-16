@@ -37,7 +37,7 @@ const mockDb = {
 };
 
 if (!supabase) {
-  console.info("💡 Running in Local Storage Mode.");
+  console.info("💡 Running in Local Storage Mode. Set SUPABASE_URL and SUPABASE_ANON_KEY for cloud sync.");
 }
 
 export const db = {
@@ -45,16 +45,27 @@ export const db = {
     if (!supabase) return mockDb.getUsers();
     try {
       const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
-      if (error) return mockDb.getUsers();
+      if (error) {
+        console.error("Supabase Fetch Error:", error);
+        return mockDb.getUsers();
+      }
       return (data || []).map(row => ({
         fullName: row.full_name,
         username: row.username,
         phone: row.phone,
         password: row.password,
         userCode: row.user_code,
-        progress: row.progress
+        progress: row.progress || {
+          completedTenses: [],
+          unlockedTenses: ['pres-simple', 'pres-cont', 'past-simple'],
+          xp: 0,
+          streak: 1,
+          lastActive: new Date().toISOString(),
+          level: 1
+        }
       }));
     } catch (err) {
+      console.error("Database Connection Error:", err);
       return mockDb.getUsers();
     }
   },
@@ -107,6 +118,7 @@ export const db = {
       if (error) throw error;
       return { success: true };
     } catch (err: any) {
+      console.error("Registration error:", err);
       return { success: false, error: err.message };
     }
   },
