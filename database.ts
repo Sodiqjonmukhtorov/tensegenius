@@ -2,14 +2,22 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { User } from './types';
 
-// Vercel Environment Variables dan o'qish
+// O'zgaruvchilarni olish
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
-// Agar URL yoki KEY mavjud bo'lmasa, client'ni null qaytarish
-export const supabase: SupabaseClient | null = (supabaseUrl && supabaseKey && supabaseUrl !== 'undefined' && supabaseKey !== 'undefined') 
-  ? createClient(supabaseUrl, supabaseKey) 
+// Haqiqiy qiymat ekanligini tekshirish (faqat string bo'lsa va 'undefined' bo'lmasa)
+const isDefined = (val: any): val is string => {
+  return typeof val === 'string' && val.length > 10 && val !== 'undefined' && val !== 'null';
+};
+
+export const supabase: SupabaseClient | null = (isDefined(supabaseUrl) && isDefined(supabaseKey)) 
+  ? createClient(supabaseUrl!, supabaseKey!) 
   : null;
+
+if (!supabase) {
+  console.warn("Supabase connection is not established. Please ensure SUPABASE_URL and SUPABASE_ANON_KEY are set correctly in Vercel.");
+}
 
 export const db = {
   async getAllUsers(): Promise<User[]> {

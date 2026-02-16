@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Language, User } from '../types';
 import { UI_STRINGS } from '../constants';
-import { UserCircle2, Phone, Lock, CheckCircle2, ArrowRight, ShieldCheck, RefreshCcw, UserPlus, HelpCircle, AlertCircle, MessageCircle, ArrowLeft, Settings, Key, Globe, Database, ExternalLink, Copy, Check } from 'lucide-react';
+import { UserCircle2, Phone, Lock, CheckCircle2, ArrowRight, ShieldCheck, RefreshCcw, UserPlus, HelpCircle, AlertCircle, MessageCircle, ArrowLeft, Settings, Key, Globe, Database, ExternalLink, Shield } from 'lucide-react';
 import { db, supabase } from '../database';
 
 interface AuthPageProps {
@@ -33,8 +33,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
     
     if (!supabase) {
       setError(lang === 'uz' 
-        ? "⚠️ Baza ulanmagan! Environment Variables xato." 
-        : "⚠️ Database not connected! Environment Variables missing.");
+        ? "⚠️ Baza ulanmagan! Kalitlar koda yetib bormadi. Vercel-da 'Redeploy' tugmasini bosing." 
+        : "⚠️ Database not connected! Keys didn't reach the code. Click 'Redeploy' in Vercel.");
       setShowSetupGuide(true);
       return;
     }
@@ -43,7 +43,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
     const normalizedUsername = username.toLowerCase().trim();
 
     if (!validateUsername(normalizedUsername)) {
-      setError(lang === 'uz' ? "Username faqat kichik harflar, raqamlar va (_) bo'lishi kerak!" : "Username must be lowercase, numbers and (_).");
+      setError(lang === 'uz' ? "Username xato!" : "Invalid username!");
       setLoading(false);
       return;
     }
@@ -82,7 +82,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
       setSuccess(strings.confirmed);
       setTimeout(() => onLogin(newUser), 1500);
     } else {
-      setError(lang === 'uz' ? "Baza bilan bog'lanishda xatolik." : "DB Connection error.");
+      setError(lang === 'uz' ? "Baza bilan bog'lanishda xatolik (RLS yoki Table xatosi)." : "DB Connection error (Check RLS or Table).");
     }
     setLoading(false);
   };
@@ -92,7 +92,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
     setError('');
     
     if (!supabase && mode !== 'admin') {
-      setError(lang === 'uz' ? "Baza ulanmagan!" : "Database not connected!");
+      setError(lang === 'uz' ? "⚠️ Baza ulanmagan! Vercel-da 'Redeploy' qiling." : "⚠️ DB not connected! Redeploy in Vercel.");
       setShowSetupGuide(true);
       return;
     }
@@ -112,7 +112,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
         };
         onLogin(adminUser, true);
       } else {
-        setError(lang === 'uz' ? "Admin login yoki parol xato!" : "Invalid admin credentials!");
+        setError(lang === 'uz' ? "Admin parol xato!" : "Invalid admin password!");
       }
       setLoading(false);
       return;
@@ -122,7 +122,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
     if (user && user.password === password) {
       onLogin(user);
     } else {
-      setError(lang === 'uz' ? "Username yoki parol xato!" : "Invalid username or password!");
+      setError(lang === 'uz' ? "Login yoki parol xato!" : "Invalid login!");
     }
     setLoading(false);
   };
@@ -159,86 +159,43 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">TenseGenius Mastery AI</p>
         </div>
 
-        {/* Final Interactive Setup Guide */}
+        {/* Improved Setup Guide to match user screenshot */}
         {showSetupGuide && !supabase && (
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border-4 border-indigo-500 border-dashed animate-in slide-in-from-bottom-8 max-h-[80vh] overflow-y-auto">
+          <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border-4 border-indigo-500 border-dashed animate-in slide-in-from-bottom-8 max-h-[85vh] overflow-y-auto">
              <div className="flex items-center gap-3 text-indigo-600 mb-6">
                 <div className="p-2 bg-indigo-50 rounded-xl">
                   <Database size={24} className="animate-pulse" />
                 </div>
                 <div>
-                   <h3 className="font-black text-sm uppercase tracking-widest">To'ldirish tartibi</h3>
-                   <p className="text-[10px] text-slate-400 font-bold uppercase">Aynan rasmdagi kabi:</p>
+                   <h3 className="font-black text-sm uppercase tracking-widest">Oxirgi qadamlar</h3>
+                   <p className="text-[10px] text-slate-400 font-bold uppercase">Kalitlar kiritilgan bo'lsa:</p>
                 </div>
              </div>
 
              <div className="space-y-6">
-                {/* Variable 1 */}
                 <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-black text-indigo-400 uppercase">1-o'zgaruvchi</span>
-                    <span className="text-[8px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded">URL</span>
+                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Vercel:</span>
+                    <span className="text-[8px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-black">REDEPLOY</span>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[8px] font-bold text-slate-500 uppercase">Key (Vercel'da):</span>
-                      <code className="text-[11px] font-black text-white bg-white/5 p-2 rounded block">SUPABASE_URL</code>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[8px] font-bold text-slate-500 uppercase">Value (Supabase'dan):</span>
-                      <code className="text-[10px] font-medium text-emerald-400 italic">Project URL nusxalang</code>
-                    </div>
+                    <p className="text-xs font-bold text-white">"Deployments" bo'limiga o'ting va oxirgi versiyada "Redeploy" ni bosing.</p>
+                    <p className="text-[10px] text-slate-500 italic">Vite o'zgaruvchilarni ko'rishi uchun loyiha qayta qurilishi (build) shart.</p>
                   </div>
                 </div>
 
-                {/* Variable 2 */}
-                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-black text-indigo-400 uppercase">2-o'zgaruvchi</span>
-                    <span className="text-[8px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded">KEY</span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[8px] font-bold text-slate-500 uppercase">Key (Vercel'da):</span>
-                      <code className="text-[11px] font-black text-white bg-white/5 p-2 rounded block">SUPABASE_ANON_KEY</code>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[8px] font-bold text-slate-500 uppercase">Value (Supabase'dan):</span>
-                      <code className="text-[10px] font-medium text-emerald-400 italic">Publishable Key nusxalang</code>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Variable 3 */}
-                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-black text-indigo-400 uppercase">3-o'zgaruvchi</span>
-                    <span className="text-[8px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">AI</span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[8px] font-bold text-slate-500 uppercase">Key (Vercel'da):</span>
-                      <code className="text-[11px] font-black text-white bg-white/5 p-2 rounded block">API_KEY</code>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[8px] font-bold text-slate-500 uppercase">Value (Panda'dan):</span>
-                      <code className="text-[10px] font-medium text-amber-400 italic">Gemini API Key</code>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex items-start gap-3">
-                   <CheckCircle2 className="text-emerald-500 shrink-0" size={16} />
-                   <p className="text-[10px] text-emerald-800 font-medium leading-relaxed">
-                     Hammasini qo'shib <b>Save</b> bosing va Vercel-da saytni <b>Redeploy</b> qiling. Shunda ishlaydi!
+                <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 flex items-start gap-3">
+                   <Shield size={16} className="text-amber-500 shrink-0" />
+                   <p className="text-[10px] text-slate-600 font-medium leading-relaxed italic">
+                     Agar "Redeploy" qilsangiz ham bu xabar tursa, o'zgaruvchilar nomini tekshiring: SUPABASE_URL, SUPABASE_ANON_KEY va API_KEY bo'lishi kerak.
                    </p>
                 </div>
 
                 <button 
-                  onClick={() => setShowSetupGuide(false)}
+                  onClick={() => window.location.reload()}
                   className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl"
                 >
-                  Tayyor, boshladim!
+                  Saytni yangilash
                 </button>
              </div>
           </div>
@@ -257,7 +214,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
                 ) : (
                   <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Loading...</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Tekshirilmoqda...</p>
                   </div>
                 )}
              </div>
@@ -270,18 +227,16 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
                    <div className="space-y-1">
                       <h4 className="font-black text-indigo-900 text-sm">{strings.resetPassword}</h4>
                       <p className="text-xs text-indigo-700 font-medium leading-relaxed">
-                        {lang === 'uz' 
-                          ? "Parolni tiklash uchun adminga murojaat qiling." 
-                          : "Contact admin to reset your password."}
+                        Parolni tiklash uchun adminga murojaat qiling.
                       </p>
                    </div>
                 </div>
                 <div className="space-y-3">
                    <a href="https://t.me/sodiqjon_202" target="_blank" rel="noopener noreferrer" className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl">
-                     <MessageCircle size={18} className="text-emerald-400" /> Telegram: @sodiqjon_202
+                     <MessageCircle size={18} className="text-emerald-400" /> Telegram
                    </a>
                    <button onClick={() => switchMode('login')} className="w-full bg-slate-50 text-slate-500 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-100 transition-all">
-                     <ArrowLeft size={14} /> {lang === 'uz' ? 'Orqaga' : 'Back'}
+                     <ArrowLeft size={14} /> Orqaga
                    </button>
                 </div>
              </div>
@@ -293,7 +248,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">{strings.fullName}</label>
                          <div className="relative">
                             <UserCircle2 className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                            <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Sodiqjon" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl pl-14 pr-6 py-4 font-bold focus:outline-none focus:border-slate-900 transition-all shadow-sm" />
+                            <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Ismingiz" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl pl-14 pr-6 py-4 font-bold focus:outline-none focus:border-slate-900 transition-all shadow-sm" />
                          </div>
                       </div>
                    )}
@@ -301,7 +256,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">{strings.username}</label>
                       <div className="relative">
                          <UserCircle2 className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                         <input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} placeholder="sodiqjon_00" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl pl-14 pr-6 py-4 font-bold focus:outline-none focus:border-slate-900 transition-all shadow-sm" />
+                         <input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} placeholder="username" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl pl-14 pr-6 py-4 font-bold focus:outline-none focus:border-slate-900 transition-all shadow-sm" />
                       </div>
                    </div>
                    {mode === 'register' && (
@@ -317,7 +272,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
                       <div className="flex justify-between items-center ml-4 mr-4">
                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{strings.password}</label>
                          <button type="button" onClick={() => switchMode('reset')} className="text-[9px] font-black text-indigo-500 uppercase tracking-widest hover:text-indigo-700">
-                           {strings.forgotPassword}
+                           Unutdingizmi?
                          </button>
                       </div>
                       <div className="relative">
@@ -355,21 +310,17 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
                 {mode === 'login' ? (
                   <button onClick={() => switchMode('register')} className="group text-[10px] font-black text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-widest flex items-center gap-2">
                     <UserPlus size={16} className="text-emerald-500" />
-                    {lang === 'uz' ? "Yangi hisob ochish" : "Create Account"}
+                    Ro'yxatdan o'tish
                   </button>
                 ) : (
                   <button onClick={() => switchMode('login')} className="group text-[10px] font-black text-slate-500 hover:text-indigo-600 transition-colors uppercase tracking-widest flex items-center gap-2">
                     <RefreshCcw size={16} className="text-indigo-500" />
-                    {lang === 'uz' ? "Kirishga qaytish" : "Back to login"}
+                    Kirishga qaytish
                   </button>
                 )}
              </div>
            )}
         </div>
-        
-        <p className="text-center text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">
-          Mastery Environment v2.5
-        </p>
       </div>
     </div>
   );
