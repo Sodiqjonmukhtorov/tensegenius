@@ -1,19 +1,18 @@
 
-# 🎯 Global Foydalanuvchilar Bazasi (Supabase ulanishi)
+# 🚀 TenseGenius - Doimiy Bazani Sozlash
 
-Hamma ro'yxatdan o'tganlarni ko'rish uchun bu bosqichlarni 100% bajarishingiz shart:
+Foydalanuvchilar Admin panelda har doim saqlanib qolishi uchun quyidagi bosqichlarni bajaring:
 
-### 1. Vercel-da kalitlarni sozlang
-Vercel dashboard-ga kiring -> **Settings** -> **Environment Variables**.
-Quyidagi 3 ta kalitni qo'shing:
-- `API_KEY` (Gemini uchun)
-- `SUPABASE_URL` (Supabase URL)
-- `SUPABASE_ANON_KEY` (Supabase Anon Key)
+### 1. Vercel-da kalitlarni qo'shish
+Vercel dashboard-ga kiring -> **Project Settings** -> **Environment Variables**.
+Quyidagi 2 ta kalitni qo'shing (Ularni Supabase-dan olasiz):
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
 
-**MUHIM:** Kalitlarni saqlagach, **Deployments** bo'limiga o'ting va oxirgi build-ni **Redeploy** qiling.
+**MUHIM:** Kalitlarni saqlagach, oxirgi marta **Redeploy** qiling.
 
-### 2. Supabase SQL Editor-ga yoziladigan kod
-Supabase-da chap menuda **SQL Editor** bo'limiga kiring va quyidagi kodni nusxalab, **RUN** tugmasini bosing:
+### 2. Supabase SQL Editor-da jadval yaratish
+Supabase dashboard-ga kiring, chap menyudan **SQL Editor** bo'limini oching va quyidagi kodni **Run** qiling:
 
 ```sql
 CREATE TABLE IF NOT EXISTS users (
@@ -27,11 +26,13 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Xavfsizlikni o'chirish (o'quv loyihasi uchun osonlik yaratadi)
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all" ON users FOR ALL USING (true) WITH CHECK (true);
 ```
 
 ### 3. Tekshirish
-Admin panelning tepasida **"Cloud Sync Active"** (yashil rangda) deb chiqsa, demak hamma ro'yxatdan o'tganlar sizga ko'rinadi.
+Admin panelga kiring. Agar yuqorida **"Cloud Live"** (yashil) degan yozuv paydo bo'lsa, demak ma'lumotlar endi hech qachon yo'qolmaydi!
 
+---
 Dasturchi: **Sodiqjon Mukhtorov**
