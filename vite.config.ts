@@ -4,7 +4,6 @@ import react from '@vitejs/plugin-react';
 import process from 'node:process';
 
 export default defineConfig(({ mode }) => {
-  // Use process.cwd() from the imported node:process to ensure types are correct in the Vite config environment
   const env = loadEnv(mode, process.cwd(), '');
   
   return {

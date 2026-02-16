@@ -20,7 +20,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isGifting, setIsGifting] = useState<string | null>(null);
   const [giftAmount, setGiftAmount] = useState(100);
-  const [showSetup, setShowSetup] = useState(false);
+  const [showSetup, setShowSetup] = useState(!supabase);
   const [copiedSql, setCopiedSql] = useState(false);
 
   const loadUsers = async () => {
@@ -38,17 +38,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
   useEffect(() => {
     loadUsers();
     
-    // Real-time updates for Cloud Mode
     if (supabase) {
       const channel = supabase
-        .channel('admin-updates')
+        .channel('admin-live')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, loadUsers)
         .subscribe();
       return () => { supabase.removeChannel(channel); };
     } else {
-      // Polling for Local Mode (to see changes if testing in multiple tabs)
-      const interval = setInterval(loadUsers, 5000);
-      return () => clearInterval(interval);
+      window.addEventListener('storage_update', loadUsers);
+      return () => window.removeEventListener('storage_update', loadUsers);
     }
   }, []);
 
@@ -99,14 +97,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
         <div className="flex gap-3 relative z-10">
           <button 
             onClick={loadUsers}
-            className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/10"
+            className={`p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/10 ${loading ? 'animate-spin' : ''}`}
             title="Refresh"
           >
-            <RefreshCcw size={20} className={loading ? 'animate-spin' : ''} />
+            <RefreshCcw size={20} />
           </button>
           <button 
             onClick={() => setShowSetup(!showSetup)}
             className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/10"
+            title="Setup Settings"
           >
             <Settings size={20} />
           </button>
@@ -116,29 +115,69 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
         </div>
       </header>
 
-      {/* Local Mode Warning - Very Prominent */}
-      {!supabase && (
-        <div className="bg-amber-50 border-4 border-amber-400 rounded-[2.5rem] p-8 md:p-10 flex flex-col md:flex-row items-center gap-8 shadow-xl">
-           <div className="w-20 h-20 bg-amber-400 rounded-3xl flex items-center justify-center text-white shadow-lg shrink-0">
-              <AlertTriangle size={40} />
+      {/* Cloud Connection Setup Guide (Faqat ulanmaganda ko'rinadi) */}
+      {showSetup && (
+        <div className="bg-white border-4 border-indigo-100 rounded-[3rem] p-8 md:p-12 space-y-8 shadow-2xl animate-in zoom-in duration-300">
+           <div className="flex items-center justify-between">
+              <div className="flex items-center gap-5">
+                 <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center">
+                    <Database size={32} />
+                 </div>
+                 <div>
+                    <h2 className="text-2xl font-black text-slate-900">Ulanishni yakunlash (Supabase)</h2>
+                    <p className="text-slate-500 font-medium">Hammani bitta bazada ko'rish uchun quyidagilarni bajaring:</p>
+                 </div>
+              </div>
+              <button onClick={() => setShowSetup(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400"><X size={24} /></button>
            </div>
-           <div className="space-y-2 text-center md:text-left">
-              <h2 className="text-2xl font-black text-amber-900 uppercase tracking-tight">Diqqat: Ma'lumotlar faqat shu qurilmada!</h2>
-              <p className="text-amber-800 font-medium leading-relaxed">
-                Hozirda bulutli baza (Supabase) ulanmagan. Boshqa telefonlardan ro'yxatdan o'tganlarni bu yerda ko'ra olmaysiz. 
-                Hammani bitta joyda ko'rish uchun <b>Supabase</b> ulanishini sozlang.
+
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              <div className="space-y-6">
+                 <div className="space-y-4">
+                    <h3 className="font-black text-slate-800 flex items-center gap-2"><Terminal size={18} className="text-indigo-600" /> 1. Vercel-ga kalitlarni qo'shing</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">Vercel Dashboard -> Settings -> Environment Variables bo'limiga o'tib, ushbu kalitlarni yozing va <b>Redeploy</b> qiling:</p>
+                    <div className="bg-slate-900 p-6 rounded-2xl font-mono text-[11px] text-emerald-400 space-y-3 shadow-inner">
+                       <div className="flex justify-between items-center group">
+                          <span>SUPABASE_URL = https://nacqbacwqsxflxdelabd.supabase.co</span>
+                          <button onClick={() => navigator.clipboard.writeText("https://nacqbacwqsxflxdelabd.supabase.co")} className="opacity-0 group-hover:opacity-100 text-[9px] bg-white/10 px-2 py-1 rounded">COPY</button>
+                       </div>
+                       <div className="flex justify-between items-center group">
+                          <span>SUPABASE_ANON_KEY = sb_publishable_TmAypdRBAK9kDVmfd_f3gw_3Ll</span>
+                          <button onClick={() => navigator.clipboard.writeText("sb_publishable_TmAypdRBAK9kDVmfd_f3gw_3Ll")} className="opacity-0 group-hover:opacity-100 text-[9px] bg-white/10 px-2 py-1 rounded">COPY</button>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="space-y-6">
+                 <div className="space-y-4">
+                    <h3 className="font-black text-slate-800 flex items-center gap-2"><Key size={18} className="text-indigo-600" /> 2. Bazada jadval bormi?</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">Supabase SQL Editor bo'limida ushbu kodni bir marta ishga tushiring:</p>
+                    <button 
+                      onClick={() => { navigator.clipboard.writeText("CREATE TABLE IF NOT EXISTS users (id BIGSERIAL PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, full_name TEXT NOT NULL, phone TEXT NOT NULL, user_code TEXT UNIQUE NOT NULL, progress JSONB DEFAULT '{\"xp\":0, \"level\":1, \"completedTenses\":[], \"unlockedTenses\":[\"pres-simple\"]}'::jsonb, created_at TIMESTAMPTZ DEFAULT NOW()); ALTER TABLE users ENABLE ROW LEVEL SECURITY; CREATE POLICY \"Allow all\" ON users FOR ALL USING (true) WITH CHECK (true);"); setCopiedSql(true); setTimeout(() => setCopiedSql(false), 2000); }}
+                      className={`w-full py-3 rounded-xl font-black text-xs flex items-center justify-center gap-3 transition-all ${copiedSql ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                    >
+                      {copiedSql ? <Check size={16} /> : <Copy size={16} />} 
+                      {copiedSql ? 'SQL Nusxalandi!' : 'SQL Kodini nusxalash'}
+                    </button>
+                 </div>
+                 
+                 <a href="https://supabase.com/dashboard/project/nacqbacwqsxflxdelabd/sql" target="_blank" className="block w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-center text-sm shadow-xl hover:bg-indigo-700 transition-all">
+                    Supabase SQL Editor-ni ochish <ExternalLink size={16} className="inline ml-1" />
+                 </a>
+              </div>
+           </div>
+
+           <div className="bg-amber-50 p-6 rounded-2xl border-2 border-amber-100 flex items-start gap-4">
+              <AlertTriangle className="text-amber-500 shrink-0 mt-1" size={24} />
+              <p className="text-xs text-amber-800 font-medium leading-relaxed">
+                 <b>Diqqat:</b> Agar siz hozir Vercel-ga kalitlarni qo'shmasangiz, foydalanuvchilar faqat o'zlari ro'yxatdan o'tgan qurilmadagina qoladi. Siz ularni bitta umumiy ro'yxatda ko'ra olmaysiz.
               </p>
-              <button 
-                onClick={() => setShowSetup(true)}
-                className="mt-2 text-indigo-600 font-black text-sm underline underline-offset-4 hover:text-indigo-800 transition-colors"
-              >
-                Qanday ulanadi? (Qo'llanmani ochish)
-              </button>
            </div>
         </div>
       )}
 
-      {/* Search & Stats */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 relative group">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
@@ -150,22 +189,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
             className="w-full bg-white border-2 border-slate-100 rounded-[2rem] pl-16 pr-6 py-5 text-lg font-bold focus:outline-none focus:border-indigo-500 shadow-sm transition-all"
           />
         </div>
-        <div className="bg-indigo-600 rounded-[2rem] p-6 text-white shadow-xl flex items-center justify-between group overflow-hidden relative">
-           <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform">
-              <Users size={120} />
+        <div className="bg-white rounded-[2rem] p-6 border-b-8 border border-slate-100 shadow-xl flex items-center justify-between group overflow-hidden relative">
+           <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform">
+              <Users size={100} />
            </div>
            <div className="relative z-10">
-              <div className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Total Users</div>
-              <div className="text-4xl font-black">{users.length}</div>
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Users</div>
+              <div className="text-4xl font-black text-slate-900">{users.length}</div>
            </div>
-           <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center relative z-10">
+           <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 relative z-10 shadow-inner">
               <Users size={28} />
            </div>
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl overflow-hidden">
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl overflow-hidden min-h-[400px]">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -251,50 +290,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
           </table>
         </div>
       </div>
-
-      {/* Database Setup Modal */}
-      {showSetup && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
-           <div className="bg-white w-full max-w-3xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-              <div className="bg-slate-900 p-8 text-white flex justify-between items-center">
-                 <div className="flex items-center gap-4">
-                    <Settings className="text-indigo-400" size={32} />
-                    <h2 className="text-2xl font-black">Supabase Ulanish Qo'llanmasi</h2>
-                 </div>
-                 <button onClick={() => setShowSetup(false)} className="p-2 hover:bg-white/10 rounded-full"><X size={24} /></button>
-              </div>
-              <div className="p-10 space-y-8 overflow-y-auto max-h-[70vh]">
-                 <div className="space-y-4">
-                    <h3 className="font-black text-slate-800 flex items-center gap-2"><Terminal size={18} /> 1. Vercel / Muhit Kalitlari</h3>
-                    <p className="text-sm text-slate-500">Agar Vercel-da bo'lsangiz, quyidagi kalitlarni qo'shib "Redeploy" qiling:</p>
-                    <div className="bg-slate-900 p-6 rounded-2xl font-mono text-xs text-emerald-400 space-y-2">
-                       <p>SUPABASE_URL = (Supabase Project URL)</p>
-                       <p>SUPABASE_ANON_KEY = (Supabase Anon Key)</p>
-                    </div>
-                 </div>
-
-                 <div className="space-y-4">
-                    <h3 className="font-black text-slate-800 flex items-center gap-2"><Database size={18} /> 2. Bazada jadval yaratish</h3>
-                    <p className="text-sm text-slate-500">Supabase SQL Editor-ga quyidagini kiriting:</p>
-                    <button 
-                      onClick={() => { navigator.clipboard.writeText("CREATE TABLE users (id BIGSERIAL PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, full_name TEXT NOT NULL, phone TEXT NOT NULL, user_code TEXT UNIQUE NOT NULL, progress JSONB, created_at TIMESTAMPTZ DEFAULT NOW());"); setCopiedSql(true); setTimeout(() => setCopiedSql(false), 2000); }}
-                      className={`px-4 py-2 rounded-xl font-black text-[10px] uppercase flex items-center gap-2 transition-all ${copiedSql ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600'}`}
-                    >
-                      {copiedSql ? <Check size={14} /> : <Copy size={14} />} {copiedSql ? 'Nusxalandi' : 'SQL-ni nusxalash'}
-                    </button>
-                 </div>
-
-                 <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100">
-                    <p className="text-xs text-amber-800 font-medium"><b>Eslatma:</b> Kalitlar to'g'ri bo'lsa, Admin paneldagi sariq ogohlantirish o'rniga yashil "Cloud Sync Active" yozuvi paydo bo'ladi.</p>
-                 </div>
-                 
-                 <a href="https://supabase.com/dashboard" target="_blank" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-center flex items-center justify-center gap-3 shadow-xl">
-                    Supabase Dashboard-ni ochish <ExternalLink size={18} />
-                 </a>
-              </div>
-           </div>
-        </div>
-      )}
     </div>
   );
 };
