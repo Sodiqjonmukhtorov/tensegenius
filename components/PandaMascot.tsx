@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, X } from 'lucide-react';
-import { chatWithPanda } from '../geminiService';
+import { chatWithPandaStream } from '../geminiService';
 import { Language } from '../types';
 
 interface PandaMascotProps {
@@ -28,21 +28,40 @@ const PandaMascot: React.FC<PandaMascotProps> = ({ lang }) => {
     
     const userMsg = message.trim();
     setMessage('');
-    setChatHistory(prev => [...prev, { role: 'user', text: userMsg }]);
+    
+    // Foydalanuvchi xabarini qo'shish va Panda uchun joy tayyorlash
+    setChatHistory(prev => [
+      ...prev, 
+      { role: 'user', text: userMsg },
+      { role: 'panda', text: '' } // Bo'sh panda xabari oqim uchun
+    ]);
+    
     setLoading(true);
 
     try {
-      const response = await chatWithPanda(userMsg, lang);
-      setChatHistory(prev => [...prev, { role: 'panda', text: response }]);
+      const stream = chatWithPandaStream(userMsg, lang);
+      let fullResponse = "";
+      
+      for await (const chunk of stream) {
+        fullResponse += chunk;
+        setChatHistory(prev => {
+          const newHistory = [...prev];
+          const lastIdx = newHistory.length - 1;
+          if (newHistory[lastIdx].role === 'panda') {
+            newHistory[lastIdx] = { ...newHistory[lastIdx], text: fullResponse };
+          }
+          return newHistory;
+        });
+      }
     } catch (err) {
-      console.error("Panda Mascot Component Error:", err);
-      setChatHistory(prev => [...prev, { role: 'panda', text: lang === 'uz' ? "Xatolik yuz berdi 🐾 Iltimos, konsolni tekshiring." : "Error occurred 🐾 Please check the console." }]);
+      console.error("Panda Stream UI Error:", err);
     } finally {
       setLoading(false);
     }
   };
 
   const formatText = (text: string) => {
+    if (!text) return null;
     return text.split('\n').map((line, i) => (
       <span key={i} className="block mb-1">
         {line.split('**').map((part, j) => (
@@ -139,19 +158,10 @@ const PandaMascot: React.FC<PandaMascotProps> = ({ lang }) => {
           {chatHistory.map((chat, i) => (
             <div key={i} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2`}>
               <div className={`p-4 rounded-3xl text-[12px] font-medium max-w-[90%] shadow-md ${chat.role === 'user' ? 'bg-slate-900 text-white rounded-tr-none' : 'bg-white text-slate-700 border border-emerald-100 rounded-tl-none'}`}>
-                {chat.role === 'panda' ? formatText(chat.text) : chat.text}
+                {chat.role === 'panda' ? (chat.text ? formatText(chat.text) : <div className="flex gap-1"><span className="w-1 h-1 bg-emerald-400 rounded-full animate-bounce"></span><span className="w-1 h-1 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.2s]"></span><span className="w-1 h-1 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.4s]"></span></div>) : chat.text}
               </div>
             </div>
           ))}
-          {loading && (
-            <div className="flex justify-start">
-               <div className="bg-white p-4 rounded-3xl rounded-tl-none border border-emerald-100 shadow-sm flex gap-1.5">
-                 <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" />
-                 <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.2s]" />
-                 <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.4s]" />
-               </div>
-            </div>
-          )}
           <div ref={chatEndRef} />
         </div>
 
