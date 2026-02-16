@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Language, User } from '../types';
 import { UI_STRINGS } from '../constants';
-import { Users, Zap, ShieldCheck, Search, ArrowRight, UserCheck, Phone, LogOut } from 'lucide-react';
+import { Users, Zap, ShieldCheck, ArrowRight, UserCheck, Phone, LogOut, RefreshCcw } from 'lucide-react';
+import { db } from '../database';
 
 interface AdminPanelProps {
   lang: Language;
@@ -10,31 +12,35 @@ interface AdminPanelProps {
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
   const strings = UI_STRINGS[lang];
-  const [users, setUsers] = useState<User[]>(() => {
-    const data = localStorage.getItem('tg_users');
-    return data ? JSON.parse(data) : [];
-  });
-
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [giftTargetCode, setGiftTargetCode] = useState('');
   const [giftAmount, setGiftAmount] = useState<number>(0);
   const [status, setStatus] = useState('');
 
-  const handleGiftXP = (e: React.FormEvent) => {
+  const loadUsers = async () => {
+    setLoading(true);
+    const data = await db.getAllUsers();
+    setUsers(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const handleGiftXP = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('');
     
-    const targetIndex = users.findIndex(u => u.userCode === giftTargetCode);
-    if (targetIndex >= 0) {
-      const updatedUsers = [...users];
-      updatedUsers[targetIndex].progress.xp += giftAmount;
-      
-      localStorage.setItem('tg_users', JSON.stringify(updatedUsers));
-      setUsers(updatedUsers);
+    const success = await db.giftXPByCode(giftTargetCode, giftAmount);
+    if (success) {
       setStatus(lang === 'uz' ? "XP muvaffaqiyatli yuborildi!" : "XP successfully sent!");
       setGiftAmount(0);
       setGiftTargetCode('');
+      loadUsers(); // Refresh list
     } else {
-      setStatus(lang === 'uz' ? "Bunday kodli foydalanuvchi topilmadi!" : "User code not found!");
+      setStatus(lang === 'uz' ? "Xatolik! Foydalanuvchi topilmadi." : "Error! User not found.");
     }
   };
 
@@ -48,17 +54,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
            </div>
            <h1 className="text-4xl font-black text-slate-900">Control Center</h1>
         </div>
-        <button 
-          onClick={onLogout}
-          className="bg-white border border-slate-200 px-6 py-3 rounded-2xl font-black text-sm text-slate-500 hover:text-rose-600 hover:border-rose-100 transition-all flex items-center gap-3 shadow-sm"
-        >
-          <LogOut size={18} />
-          {strings.logout}
-        </button>
+        <div className="flex gap-4">
+          <button onClick={loadUsers} className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all shadow-sm">
+            <RefreshCcw size={20} className={loading ? 'animate-spin' : ''} />
+          </button>
+          <button onClick={onLogout} className="bg-white border border-slate-200 px-6 py-3 rounded-2xl font-black text-sm text-slate-500 hover:text-rose-600 hover:border-rose-100 transition-all flex items-center gap-3 shadow-sm">
+            <LogOut size={18} /> {strings.logout}
+          </button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* XP Gifting Form */}
         <div className="lg:col-span-4 space-y-6">
            <div className="bg-white p-8 rounded-[3rem] shadow-2xl border border-slate-100 space-y-6">
               <div className="flex items-center gap-4">
@@ -67,25 +73,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
                  </div>
                  <h2 className="text-2xl font-black">{strings.giftXp}</h2>
               </div>
-
               <form onSubmit={handleGiftXP} className="space-y-4">
                  <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-4">{strings.enterCode}</label>
-                    <input 
-                      type="text" required value={giftTargetCode} 
-                      onChange={(e) => setGiftTargetCode(e.target.value)}
-                      placeholder="#12345678"
-                      className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold focus:outline-none focus:border-indigo-500"
-                    />
+                    <input type="text" required value={giftTargetCode} onChange={(e) => setGiftTargetCode(e.target.value)} placeholder="#12345678" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold focus:outline-none focus:border-indigo-500" />
                  </div>
                  <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-4">{strings.amount}</label>
-                    <input 
-                      type="number" required value={giftAmount || ''} 
-                      onChange={(e) => setGiftAmount(parseInt(e.target.value))}
-                      placeholder="1000"
-                      className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold focus:outline-none focus:border-indigo-500"
-                    />
+                    <input type="number" required value={giftAmount || ''} onChange={(e) => setGiftAmount(parseInt(e.target.value))} placeholder="1000" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold focus:outline-none focus:border-indigo-500" />
                  </div>
                  {status && <p className={`text-xs font-black text-center ${status.includes('muvaffaqiyatli') || status.includes('successfully') ? 'text-emerald-500' : 'text-rose-500'}`}>{status}</p>}
                  <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-3">
@@ -95,7 +90,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
            </div>
         </div>
 
-        {/* Users Database */}
         <div className="lg:col-span-8 space-y-6">
            <div className="bg-white rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden">
               <div className="bg-slate-900 p-8 flex items-center justify-between text-white">
@@ -128,7 +122,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
                                 <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
                                    <Phone size={14} className="text-indigo-400" /> {u.phone}
                                 </div>
-                                <div className="text-[10px] font-mono text-slate-300">PASS: {u.password}</div>
                              </td>
                              <td className="px-8 py-6">
                                 <div className="flex items-center gap-1.5">
@@ -141,9 +134,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
                        ))}
                     </tbody>
                  </table>
-                 {users.length === 0 && (
-                   <div className="py-20 text-center text-slate-300 font-black">DATABASE IS EMPTY</div>
-                 )}
+                 {(users.length === 0 && !loading) && <div className="py-20 text-center text-slate-300 font-black uppercase tracking-widest">No users in central database</div>}
+                 {loading && <div className="py-20 text-center text-slate-300 animate-pulse font-black uppercase">Fetching cloud data...</div>}
               </div>
            </div>
         </div>

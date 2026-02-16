@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
-import { Language, User, UserProgress, AuthState } from './types';
-import { TENSES_DATA, UI_STRINGS } from './constants';
+import { Language, User, AuthState } from './types';
+import { LEVELS, UI_STRINGS } from './constants';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
@@ -11,6 +12,7 @@ import PandaMascot from './components/PandaMascot';
 import AuthPage from './pages/AuthPage';
 import SplashScreen from './components/SplashScreen';
 import AdminPanel from './pages/AdminPanel';
+import { db } from './database';
 
 const UNLOCK_COST = 200;
 
@@ -40,13 +42,12 @@ const App: React.FC = () => {
     localStorage.setItem('tg_lang', lang);
   }, [lang]);
 
+  // Central Sync: Polling for updates (e.g. from other devices or admin)
   useEffect(() => {
     if (auth.isAuthenticated && !auth.isAdmin && auth.currentUser) {
-      const interval = setInterval(() => {
-        const usersJson = localStorage.getItem('tg_users');
-        const users: User[] = usersJson ? JSON.parse(usersJson) : [];
-        const freshUser = users.find(u => u.username === auth.currentUser?.username);
-        if (freshUser && freshUser.progress.xp !== auth.currentUser.progress.xp) {
+      const interval = setInterval(async () => {
+        const freshUser = await db.getUserByUsername(auth.currentUser!.username);
+        if (freshUser && JSON.stringify(freshUser.progress) !== JSON.stringify(auth.currentUser?.progress)) {
            setAuth(prev => ({ ...prev, currentUser: freshUser }));
            localStorage.setItem('tg_current_session', JSON.stringify(freshUser));
         }
@@ -54,17 +55,6 @@ const App: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [auth.isAuthenticated, auth.isAdmin, auth.currentUser]);
-
-  const syncToDatabase = (updatedUser: User) => {
-    const usersJson = localStorage.getItem('tg_users');
-    const users: User[] = usersJson ? JSON.parse(usersJson) : [];
-    const index = users.findIndex(u => u.username === updatedUser.username);
-    if (index >= 0) {
-      users[index] = updatedUser;
-      localStorage.setItem('tg_users', JSON.stringify(users));
-      localStorage.setItem('tg_current_session', JSON.stringify(updatedUser));
-    }
-  };
 
   const handleLogin = (user: User, isAdmin: boolean = false) => {
     setAuth({ currentUser: user, isAuthenticated: true, isAdmin });
@@ -101,7 +91,7 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleUnlock = (tenseId: string) => {
+  const handleUnlock = async (tenseId: string) => {
     if (!auth.currentUser) return;
     
     if (auth.currentUser.progress.xp < UNLOCK_COST) {
@@ -110,20 +100,21 @@ const App: React.FC = () => {
       return;
     }
 
-    const updatedUser = {
-      ...auth.currentUser,
-      progress: {
-        ...auth.currentUser.progress,
-        xp: auth.currentUser.progress.xp - UNLOCK_COST,
-        unlockedTenses: [...auth.currentUser.progress.unlockedTenses, tenseId]
-      }
+    const newProgress = {
+      ...auth.currentUser.progress,
+      xp: auth.currentUser.progress.xp - UNLOCK_COST,
+      unlockedTenses: [...auth.currentUser.progress.unlockedTenses, tenseId]
     };
 
-    setAuth(prev => ({ ...prev, currentUser: updatedUser }));
-    syncToDatabase(updatedUser);
+    const success = await db.updateUserProgress(auth.currentUser.username, newProgress);
+    if (success) {
+      const updatedUser = { ...auth.currentUser, progress: newProgress };
+      setAuth(prev => ({ ...prev, currentUser: updatedUser }));
+      localStorage.setItem('tg_current_session', JSON.stringify(updatedUser));
+    }
   };
 
-  const handleTenseComplete = (earnedXp: number) => {
+  const handleTenseComplete = async (earnedXp: number) => {
     if (!auth.currentUser) return;
     const tenseId = currentPath.split('/').pop() || '';
     
@@ -136,32 +127,35 @@ const App: React.FC = () => {
     if (newCompleted.length >= 8 && newLevel === 2) newLevel = 3;
     if (newCompleted.length >= 12 && newLevel === 3) newLevel = 4;
 
-    const updatedUser = {
-      ...auth.currentUser,
-      progress: {
-        ...prevProgress,
-        completedTenses: newCompleted,
-        xp: prevProgress.xp + earnedXp,
-        level: newLevel
-      }
+    const newProgress = {
+      ...prevProgress,
+      completedTenses: newCompleted,
+      xp: prevProgress.xp + earnedXp,
+      level: newLevel
     };
 
-    setAuth(prev => ({ ...prev, currentUser: updatedUser }));
-    syncToDatabase(updatedUser);
-    setCurrentPath('/dashboard');
+    const success = await db.updateUserProgress(auth.currentUser.username, newProgress);
+    if (success) {
+      const updatedUser = { ...auth.currentUser, progress: newProgress };
+      setAuth(prev => ({ ...prev, currentUser: updatedUser }));
+      localStorage.setItem('tg_current_session', JSON.stringify(updatedUser));
+      setCurrentPath('/dashboard');
+    }
   };
 
-  const handleEarnXp = (amount: number) => {
+  const handleEarnXp = async (amount: number) => {
     if (!auth.currentUser) return;
-    const updatedUser = {
-      ...auth.currentUser,
-      progress: {
-        ...auth.currentUser.progress,
-        xp: auth.currentUser.progress.xp + amount
-      }
+    const newProgress = {
+      ...auth.currentUser.progress,
+      xp: auth.currentUser.progress.xp + amount
     };
-    setAuth(prev => ({ ...prev, currentUser: updatedUser }));
-    syncToDatabase(updatedUser);
+    
+    const success = await db.updateUserProgress(auth.currentUser.username, newProgress);
+    if (success) {
+      const updatedUser = { ...auth.currentUser, progress: newProgress };
+      setAuth(prev => ({ ...prev, currentUser: updatedUser }));
+      localStorage.setItem('tg_current_session', JSON.stringify(updatedUser));
+    }
   };
 
   if (showSplash) {
@@ -247,7 +241,6 @@ const App: React.FC = () => {
       />
       
       <div className="flex-1 flex overflow-hidden relative z-10">
-        {/* Mobile Sidebar Overlay */}
         <div 
           className={`fixed inset-0 z-[70] lg:hidden transition-all duration-300 ${isSidebarOpen ? 'opacity-100 pointer-events-auto bg-slate-900/60 backdrop-blur-sm' : 'opacity-0 pointer-events-none'}`}
           onClick={() => setIsSidebarOpen(false)}
@@ -267,7 +260,6 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Desktop Sidebar */}
         <div className="hidden lg:block border-r border-slate-100">
           <Sidebar 
             lang={lang} 
