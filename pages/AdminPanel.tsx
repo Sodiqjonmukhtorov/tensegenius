@@ -4,7 +4,7 @@ import { Language, User } from '../types';
 import { UI_STRINGS } from '../constants';
 import { 
   Users, ShieldCheck, LogOut, RefreshCcw, Wifi, WifiOff, 
-  Gift, Trash2, Search, Key, UserCircle, Fingerprint, AtSign, Database, Settings, Check, X, Terminal, ExternalLink, Zap
+  Gift, Trash2, Search, Key, UserCircle, Fingerprint, AtSign, Database, Settings, Check, X, Terminal, ExternalLink, Zap, Save
 } from 'lucide-react';
 import { db, supabase } from '../database';
 
@@ -23,22 +23,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
   const [giftAmount, setGiftAmount] = useState(100);
   const [showSetup, setShowSetup] = useState(!supabase);
 
+  // Foydalanuvchilarni bazadan yuklash
   const loadUsers = async (isManual = false) => {
     if (isManual) setRefreshStatus('loading');
     setLoading(true);
     
     try {
+      // Har doim eng oxirgi ma'lumotni olish
       const data = await db.getAllUsers();
-      setUsers([...data]); 
+      setUsers(data); 
       
       if (isManual) {
+        // Muvaffaqiyatli bo'lsa vizual feedback
         setTimeout(() => {
           setRefreshStatus('success');
           setTimeout(() => setRefreshStatus('idle'), 1500);
-        }, 800);
+        }, 600);
       }
     } catch (error) {
-      console.error("Admin Load Error:", error);
+      console.error("Admin Panel ma'lumotlarni yuklashda xatolik:", error);
       if (isManual) setRefreshStatus('idle');
     } finally {
       setLoading(false);
@@ -48,29 +51,40 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
   useEffect(() => {
     loadUsers();
     
+    // --- REAL-TIME YANGILANISH REJIMLARI ---
+
     // 1. Cloud Mode (Supabase Real-time)
     if (supabase) {
       const channel = supabase
-        .channel('admin-updates')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => loadUsers())
+        .channel('db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, (payload) => {
+          console.log("Cloud change detected:", payload);
+          loadUsers();
+        })
         .subscribe();
       return () => { supabase.removeChannel(channel); };
     } 
     
-    // 2. Local Mode (Cross-tab sync)
-    const handleNativeStorage = (e: StorageEvent) => {
-      if (e.key === 'tg_mock_users') loadUsers();
+    // 2. Local Mode (Boshqa oyna orqali qo'shilsa sezish)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'tg_mock_users') {
+        console.log("Local storage change detected from other tab");
+        loadUsers();
+      }
     };
     
-    // 3. Local Mode (Same-tab sync)
-    const handleCustomUpdate = () => loadUsers();
+    // 3. Local Mode (Shu oyna ichida o'zgarsa sezish)
+    const handleLocalUpdate = () => {
+      console.log("Local DB updated in current tab");
+      loadUsers();
+    };
 
-    window.addEventListener('storage', handleNativeStorage);
-    window.addEventListener('local_db_update', handleCustomUpdate);
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('local_db_update', handleLocalUpdate);
     
     return () => {
-      window.removeEventListener('storage', handleNativeStorage);
-      window.removeEventListener('local_db_update', handleCustomUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('local_db_update', handleLocalUpdate);
     };
   }, []);
 
@@ -86,19 +100,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
     const success = await db.giftXPByCode(userCode, giftAmount);
     if (success) {
       setIsGifting(null);
-      loadUsers(true);
+      // loadUsers chaqirish shart emas, chunki listener sezadi, 
+      // lekin tezlik uchun qo'shib qo'yamiz
+      loadUsers();
     }
   };
 
   const handleDeleteUser = async (username: string) => {
     if (window.confirm(lang === 'uz' ? `${username} o'chirilsinmi?` : `Delete ${username}?`)) {
       const success = await db.deleteUser(username);
-      if (success) loadUsers(true);
+      if (success) loadUsers();
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto py-12 px-6 space-y-8 animate-in fade-in duration-500">
+      {/* Header */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-5">
            <Database size={120} />
@@ -112,7 +129,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
             <div className="flex items-center gap-2 mt-0.5">
                <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${supabase ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
                   {supabase ? <Wifi size={10} /> : <WifiOff size={10} />}
-                  {supabase ? 'Cloud Sync Active' : 'Local Storage Mode'}
+                  {supabase ? 'Cloud Persistence' : 'Local Persistence'}
+               </div>
+               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-white/10 text-slate-400">
+                  <Save size={10} /> {loading ? 'Syncing...' : 'Saved'}
                </div>
             </div>
           </div>
@@ -121,6 +141,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
           <button 
             onClick={() => loadUsers(true)}
             disabled={refreshStatus !== 'idle'}
+            title="Ma'lumotlarni yangilash"
             className={`p-3 rounded-xl transition-all border border-white/10 flex items-center justify-center min-w-[48px] ${
               refreshStatus === 'loading' ? 'bg-indigo-500/50 animate-pulse' : 
               refreshStatus === 'success' ? 'bg-emerald-500 text-white' : 
@@ -143,7 +164,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
         </div>
       </header>
 
-      {/* Stats & Search */}
+      {/* Search & Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 relative">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
@@ -155,43 +176,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
             className="w-full bg-white border-2 border-slate-100 rounded-[2rem] pl-16 pr-6 py-5 text-lg font-bold focus:outline-none focus:border-indigo-500 shadow-sm transition-all"
           />
         </div>
-        <div className="bg-white rounded-[2rem] p-6 border-b-8 border border-slate-100 shadow-xl flex items-center justify-between overflow-hidden">
-           <div>
-              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Users</div>
+        <div className="bg-white rounded-[2rem] p-6 border-b-8 border border-slate-100 shadow-xl flex items-center justify-between overflow-hidden relative group">
+           <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:scale-110 transition-transform">
+              <Users size={80} />
+           </div>
+           <div className="relative z-10">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Jami o'quvchilar</div>
               <div className="text-4xl font-black text-slate-900">{users.length}</div>
            </div>
-           <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 shadow-inner">
+           <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 shadow-inner relative z-10">
               <Users size={28} />
            </div>
         </div>
       </div>
 
-      {/* Gift Modal */}
-      {isGifting && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-           <div className="bg-white rounded-[2.5rem] p-10 w-full max-w-sm shadow-2xl space-y-6">
-              <h3 className="text-xl font-black text-center">Gift XP to {isGifting}</h3>
-              <input 
-                type="number" 
-                value={giftAmount} 
-                onChange={(e) => setGiftAmount(Number(e.target.value))}
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 text-center text-2xl font-black" 
-              />
-              <div className="flex gap-4">
-                 <button onClick={() => setIsGifting(null)} className="flex-1 py-4 font-black text-slate-400">Cancel</button>
-                 <button onClick={() => handleGiftXP(isGifting)} className="flex-1 bg-amber-500 text-white rounded-2xl font-black py-4 shadow-lg hover:bg-amber-600">SEND</button>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* Table */}
+      {/* Users Table */}
       <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl overflow-hidden min-h-[400px]">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ism-Familiya & ID</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Foydalanuvchi & ID</th>
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Username & Tel</th>
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Parol</th>
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">XP Progress</th>
@@ -200,14 +205,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {loading && users.length === 0 ? (
-                <tr><td colSpan={5} className="p-20 text-center animate-pulse font-black text-slate-300 uppercase tracking-widest">Ma'lumotlar o'qilmoqda...</td></tr>
+                <tr>
+                  <td colSpan={5} className="p-20 text-center space-y-4">
+                     <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                     <div className="font-black text-slate-300 uppercase tracking-widest text-xs">Bazadan o'qilmoqda...</div>
+                  </td>
+                </tr>
               ) : filteredUsers.length === 0 ? (
-                <tr><td colSpan={5} className="p-20 text-center font-black text-slate-300">Foydalanuvchilar yo'q.</td></tr>
+                <tr><td colSpan={5} className="p-20 text-center font-black text-slate-300">Hozircha foydalanuvchilar mavjud emas.</td></tr>
               ) : filteredUsers.map(user => (
-                <tr key={user.username} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={user.username} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400">
+                      <div className="w-11 h-11 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 shadow-inner group-hover:bg-white transition-colors">
                         <UserCircle size={24} />
                       </div>
                       <div>
@@ -228,16 +238,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <div className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black border border-emerald-100 flex items-center gap-1.5 w-fit">
+                    <div className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black border border-emerald-100 flex items-center gap-1.5 w-fit shadow-sm">
                        <Zap size={10} fill="currentColor" /> {user.progress.xp} XP
                     </div>
                   </td>
                   <td className="px-8 py-6 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => setIsGifting(user.userCode)} className="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-500 hover:text-white transition-all">
+                      <button 
+                        onClick={() => setIsGifting(user.userCode)} 
+                        title="XP yuborish"
+                        className="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-500 hover:text-white transition-all shadow-sm active:scale-90"
+                      >
                         <Gift size={18} />
                       </button>
-                      <button onClick={() => handleDeleteUser(user.username)} className="p-2.5 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all">
+                      <button 
+                        onClick={() => handleDeleteUser(user.username)} 
+                        title="O'chirish"
+                        className="p-2.5 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-90"
+                      >
                         <Trash2 size={18} />
                       </button>
                     </div>
@@ -248,6 +266,32 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
           </table>
         </div>
       </div>
+
+      {/* Gift XP Modal */}
+      {isGifting && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+           <div className="bg-white rounded-[2.5rem] p-10 w-full max-w-sm shadow-2xl space-y-6 animate-in zoom-in">
+              <div className="text-center space-y-2">
+                 <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+                    <Gift size={32} />
+                 </div>
+                 <h3 className="text-xl font-black text-slate-900">XP yuborish</h3>
+                 <p className="text-xs font-bold text-slate-400">ID: {isGifting}</p>
+              </div>
+              <input 
+                type="number" 
+                autoFocus
+                value={giftAmount} 
+                onChange={(e) => setGiftAmount(Number(e.target.value))}
+                className="w-full bg-slate-50 border-4 border-slate-100 rounded-3xl px-6 py-5 text-center text-3xl font-black text-indigo-600 focus:outline-none focus:border-indigo-500 transition-all" 
+              />
+              <div className="flex gap-4">
+                 <button onClick={() => setIsGifting(null)} className="flex-1 py-4 font-black text-slate-400 hover:text-slate-600 transition-colors">Bekor qilish</button>
+                 <button onClick={() => handleGiftXP(isGifting)} className="flex-1 bg-slate-900 text-white rounded-2xl font-black py-4 shadow-xl hover:bg-slate-800 active:scale-95 transition-all">YUBORISH</button>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };
