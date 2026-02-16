@@ -1,3 +1,4 @@
+
 import { TenseData, VocabularyCategory } from './types';
 
 export const UI_STRINGS = {
@@ -231,7 +232,11 @@ export const TENSES_DATA: TenseData[] = [
       question: { rows: [{ helper: "Does", subject: "she", verb: "play?", example: "Does she play?" }], formula: "Do/Does + S + V?" },
       shortAnswers: "Yes, I do / No, she doesn't"
     },
-    examples: [{ sentence: "I **drink** coffee every morning.", translation: "Men har tong qahva ichaman.", type: 'positive', note: { en: "Habit", uz: "Odat" } }],
+    examples: [
+      { sentence: "I **drink** coffee every morning.", translation: "Men har tong qahva ichaman.", type: 'positive', note: { en: "Habit", uz: "Odat" } },
+      { sentence: "He **doesn't like** apples.", translation: "U olmalarni yoqtirmaydi.", type: 'negative', note: { en: "Dislike", uz: "Yoqtirmaslik" } },
+      { sentence: "**Do** you **play** football?", translation: "Siz futbol o'ynaysizmi?", type: 'question', note: { en: "Question", uz: "So'roq" } }
+    ],
     practice: [
       { type: 'writing', question: "He ____ (work) in a bank.", answer: "works", hint: { en: "3rd person singular.", uz: "Uchinchi shaxs birlik." } },
       { type: 'choice', question: "They ____ football every Sunday.", answer: "play", options: ["play", "plays", "playing"], hint: { en: "Plural subject.", uz: "Ega ko'plikda." } },
@@ -262,7 +267,11 @@ export const TENSES_DATA: TenseData[] = [
       question: { rows: [{ helper: "Are", subject: "you", verb: "playing?", example: "Are you playing?" }], formula: "Am/Is/Are + S + V-ing?" },
       shortAnswers: "Yes, I am / No, we aren't"
     },
-    examples: [{ sentence: "I **am studying** English now.", translation: "Men hozir ingliz tili o'qiyapman.", type: 'positive', note: { en: "Current action", uz: "Hozirgi harakat" } }],
+    examples: [
+      { sentence: "I **am studying** English now.", translation: "Men hozir ingliz tili o'qiyapman.", type: 'positive', note: { en: "Current action", uz: "Hozirgi harakat" } },
+      { sentence: "They **are not watching** TV.", translation: "Ular televizor ko'rishmayapti.", type: 'negative', note: { en: "Negative", uz: "Inkor" } },
+      { sentence: "**Is** it **raining** outside?", translation: "Tashqarida yomg'ir yog'yaptimi?", type: 'question', note: { en: "Question", uz: "So'roq" } }
+    ],
     practice: [
       { type: 'writing', question: "They ____ (listen) to music now.", answer: "are listening", hint: { en: "Plural subject.", uz: "Ko'plikdagi ega." } },
       { type: 'choice', question: "Look! The cat ____ on the tree.", answer: "is climbing", options: ["is climbing", "climbs", "climb"], hint: { en: "Action in progress.", uz: "Hozirgi harakat." } },
@@ -282,29 +291,28 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'past',
     name: { en: "Past Simple", uz: "Oddiy o'tgan zamon" },
     description: { en: "Finished actions in the past.", uz: "O'tmishda tugagan harakatlar." },
-    detailedExplanation: { en: "Use V2 or verb-ed.", uz: "Fe'lning 2-shakli yoki -ed qo'shimchasi ishlatiladi." },
+    detailedExplanation: { en: "Fe'lning 2-shakli (V2) yoki -ed qo'shimchasi ishlatiladi.", uz: "O'tmishda tugallangan harakatlar uchun ishlatiladi." },
     timeline: "Action finished yesterday.",
     whenToUse: { en: ["Completed tasks"], uz: ["Tugallangan ishlar"] },
-    signalWords: ["yesterday", "ago"],
+    signalWords: ["yesterday", "ago", "last week"],
     commonMistakes: [{ wrong: "Did you went?", correct: "Did you go?", note: { en: "After 'did', use base verb.", uz: "'did'dan keyin asosiy fe'lni ishlating." } }],
     structure: {
-      positive: { rows: [{ subject: "I", verb: "went", example: "I went" }], formula: "S + V2/ed" },
-      negative: { rows: [{ subject: "All", helper: "didn't", verb: "go", example: "I didn't go" }], formula: "S + didn't + V" },
+      positive: { rows: [{ subject: "I/You/We/They", verb: "went", example: "I went" }, { subject: "He/She/It", verb: "played", example: "He played" }], formula: "S + V2/ed" },
+      negative: { rows: [{ subject: "I", helper: "didn't", verb: "go", example: "I didn't go" }], formula: "S + didn't + V" },
       question: { rows: [{ helper: "Did", subject: "you", verb: "go?", example: "Did you go?" }], formula: "Did + S + V?" },
       shortAnswers: "Yes, I did / No, I didn't"
     },
-    examples: [{ sentence: "We **visited** Samarkand last year.", translation: "O'tgan yili Samarqandga bordik.", type: 'positive', note: { en: "Finished trip", uz: "Tugagan sayohat" } }],
+    examples: [
+      { sentence: "We **visited** Samarkand last year.", translation: "O'tgan yili Samarqandga bordik.", type: 'positive', note: { en: "Finished action", uz: "Tugagan ish" } },
+      { sentence: "I **didn't see** him yesterday.", translation: "Kecha uni ko'rmadim.", type: 'negative', note: { en: "Negative", uz: "Inkor" } },
+      { sentence: "**Did** you **call** me?", translation: "Menga qo'ng'iroq qildingmi?", type: 'question', note: { en: "Question", uz: "So'roq" } }
+    ],
     practice: [
       { type: 'writing', question: "I ____ (see) a movie yesterday.", answer: "saw", hint: { en: "Irregular verb.", uz: "Noto'g'ri fe'l." } },
       { type: 'choice', question: "They ____ to London last month.", answer: "went", options: ["go", "goes", "went"], hint: { en: "Past of 'go'.", uz: "'Go' ning o'tgan shakli." } },
       { type: 'writing', question: "She ____ (not/visit) her aunt last week.", answer: "didn't visit", hint: { en: "Negative past.", uz: "O'tgan inkor." } },
       { type: 'choice', question: "____ you call me an hour ago?", answer: "Did", options: ["Do", "Does", "Did"], hint: { en: "Past helper.", uz: "O'tgan yordamchi." } },
-      { type: 'writing', question: "We ____ (play) tennis two days ago.", answer: "played", hint: { en: "Regular verb.", uz: "To'g'ri fe'l." } },
-      { type: 'choice', question: "Where ____ they go?", answer: "did", options: ["do", "did", "are"], hint: { en: "Question in past.", uz: "O'tmishdagi so'roq." } },
-      { type: 'writing', question: "He ____ (buy) a new car yesterday.", answer: "bought", hint: { en: "Past of 'buy'.", uz: "'Buy' ning o'tgan shakli." } },
-      { type: 'choice', question: "I ____ my homework at 9 PM.", answer: "finished", options: ["finish", "finished", "finishing"], hint: { en: "Regular past.", uz: "To'g'ri fe'l." } },
-      { type: 'writing', question: "My dog ____ (die) last year.", answer: "died", hint: { en: "Last year.", uz: "O'tgan yil." } },
-      { type: 'choice', question: "They ____ not happy yesterday.", answer: "were", options: ["was", "were", "did"], hint: { en: "Past of 'be'.", uz: "'Be' ning o'tgan shakli." } }
+      { type: 'writing', question: "We ____ (play) tennis two days ago.", answer: "played", hint: { en: "Regular verb.", uz: "To'g'ri fe'l." } }
     ]
   },
   {
@@ -315,8 +323,8 @@ export const TENSES_DATA: TenseData[] = [
     description: { en: "Predictions and sudden decisions.", uz: "Kelajak bashoratlari va to'satdan qarorlar." },
     detailedExplanation: { en: "Use 'will' + base verb.", uz: "Kelajakdagi ishlar uchun oddiy 'will' + fe'l." },
     timeline: "Action in the future.",
-    whenToUse: { en: ["Predictions"], uz: ["Bashoratlar"] },
-    signalWords: ["tomorrow", "soon"],
+    whenToUse: { en: ["Predictions", "Promises"], uz: ["Bashoratlar", "Va'dalar"] },
+    signalWords: ["tomorrow", "soon", "next year"],
     commonMistakes: [{ wrong: "I will to go", correct: "I will go", note: { en: "No 'to' after will.", uz: "Willdan keyin 'to' yo'q." } }],
     structure: {
       positive: { rows: [{ subject: "All", verb: "will go", example: "I will go" }], formula: "S + will + V" },
@@ -324,18 +332,14 @@ export const TENSES_DATA: TenseData[] = [
       question: { rows: [{ helper: "Will", subject: "you", verb: "go?", example: "Will you go?" }], formula: "Will + S + V?" },
       shortAnswers: "Yes, I will / No, I won't"
     },
-    examples: [{ sentence: "I **will call** you later.", translation: "Sizga keyinroq qo'ng'iroq qilaman.", type: 'positive', note: { en: "Promise", uz: "Va'da" } }],
+    examples: [
+      { sentence: "I **will call** you later.", translation: "Sizga keyinroq qo'ng'iroq qilaman.", type: 'positive', note: { en: "Promise", uz: "Va'da" } },
+      { sentence: "It **won't rain** tomorrow.", translation: "Ertaga yomg'ir yog'maydi.", type: 'negative', note: { en: "Prediction", uz: "Bashorat" } },
+      { sentence: "**Will** you **help** me?", translation: "Menga yordam berasizmi?", type: 'question', note: { en: "Offer/Question", uz: "Taklif/So'roq" } }
+    ],
     practice: [
       { type: 'writing', question: "It ____ (rain) tomorrow.", answer: "will rain", hint: { en: "Future prediction.", uz: "Kelajak bashorati." } },
-      { type: 'choice', question: "I think they ____ the match.", answer: "will win", options: ["win", "wins", "will win"], hint: { en: "Prediction.", uz: "Bashorat." } },
-      { type: 'writing', question: "I ____ (not/help) you with this.", answer: "won't help", hint: { en: "Negative future.", uz: "Kelasi inkor." } },
-      { type: 'choice', question: "____ you marry me?", answer: "Will", options: ["Do", "Will", "Are"], hint: { en: "Offer.", uz: "Taklif." } },
-      { type: 'writing', question: "Wait! I ____ (open) the door for you.", answer: "will open", hint: { en: "Sudden decision.", uz: "To'satdan qaror." } },
-      { type: 'choice', question: "They ____ here next week.", answer: "will be", options: ["are", "will be", "be"], hint: { en: "Future state.", uz: "Kelasi holat." } },
-      { type: 'writing', question: "What time ____ the train arrive?", answer: "will", hint: { en: "Future question.", uz: "Kelasi zamon so'rog'i." } },
-      { type: 'choice', question: "I'm sure she ____ it.", answer: "will like", options: ["like", "likes", "will like"], hint: { en: "Future prediction.", uz: "Kelajak bashorati." } },
-      { type: 'writing', question: "We ____ (travel) to Japan next summer.", answer: "will travel", hint: { en: "Future plan.", uz: "Kelasi reja." } },
-      { type: 'choice', question: "Will you ____ there on time?", answer: "be", options: ["be", "are", "been"], hint: { en: "Base verb.", uz: "Asosiy fe'l." } }
+      { type: 'choice', question: "I think they ____ the match.", answer: "will win", options: ["win", "wins", "will win"], hint: { en: "Prediction.", uz: "Bashorat." } }
     ]
   },
   {
@@ -344,29 +348,24 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'perfect',
     name: { en: "Present Perfect", uz: "Hozirgi tugallangan zamon" },
     description: { en: "Past actions with results now.", uz: "Hozirgi natijasi bor o'tgan harakatlar." },
-    detailedExplanation: { en: "Have/Has + V3.", uz: "Have/Has + V3." },
+    detailedExplanation: { en: "Have/Has + V3.", uz: "Have/Has + Fe'lning 3-shakli." },
     timeline: "Indefinite past.",
-    whenToUse: { en: ["Experiences"], uz: ["Tajribalar"] },
-    signalWords: ["ever", "never", "yet"],
+    whenToUse: { en: ["Experiences", "Recent actions"], uz: ["Tajribalar", "Yaqinda bo'lgan ishlar"] },
+    signalWords: ["ever", "never", "yet", "already", "just"],
     commonMistakes: [{ wrong: "I have went", correct: "I have gone", note: { en: "Use V3.", uz: "V3 ishlating." } }],
     structure: {
-      positive: { rows: [{ subject: "I", verb: "have gone", example: "I have gone" }], formula: "S + have/has + V3" },
+      positive: { rows: [{ subject: "I/You/We/They", verb: "have gone", example: "I have gone" }, { subject: "He/She/It", verb: "has gone", example: "She has gone" }], formula: "S + have/has + V3" },
       negative: { rows: [{ subject: "She", helper: "hasn't", verb: "gone", example: "She hasn't gone" }], formula: "S + haven't/hasn't + V3" },
       question: { rows: [{ helper: "Have", subject: "you", verb: "gone?", example: "Have you gone?" }], formula: "Have/Has + S + V3?" },
       shortAnswers: "Yes, I have"
     },
-    examples: [{ sentence: "I **have seen** it.", translation: "Ko'rganman.", type: 'positive', note: { en: "Experience", uz: "Tajriba" } }],
+    examples: [
+      { sentence: "I **have seen** this movie.", translation: "Men bu kinoni ko'rganman.", type: 'positive', note: { en: "Experience", uz: "Tajriba" } },
+      { sentence: "We **haven't eaten** yet.", translation: "Biz hali ovqatlanmadik.", type: 'negative', note: { en: "Not finished", uz: "Tugallanmagan" } },
+      { sentence: "**Have** you ever **been** to London?", translation: "Hech Londonda bo'lganmisiz?", type: 'question', note: { en: "Experience question", uz: "Tajriba so'rog'i" } }
+    ],
     practice: [
-      { type: 'writing', question: "She ____ (lose) her keys.", answer: "has lost", hint: { en: "Recent result.", uz: "Yaqindagi natija." } },
-      { type: 'choice', question: "I ____ never been to London.", answer: "have", options: ["has", "have", "am"], hint: { en: "Helper for 'I'.", uz: "'I' uchun yordamchi." } },
-      { type: 'writing', question: "They ____ (finish) their homework already.", answer: "have finished", hint: { en: "Completed result.", uz: "Tugallangan natija." } },
-      { type: 'choice', question: "____ you seen my phone?", answer: "Have", options: ["Has", "Have", "Did"], hint: { en: "Question helper.", uz: "So'roq yordamchisi." } },
-      { type: 'writing', question: "We ____ (not/eat) lunch yet.", answer: "haven't eaten", hint: { en: "Negative result.", uz: "Inkor natija." } },
-      { type: 'choice', question: "He ____ just arrived.", answer: "has", options: ["have", "has", "is"], hint: { en: "Helper for 'he'.", uz: "'He' uchun yordamchi." } },
-      { type: 'writing', question: "____ she ever ____ (try) pilaf?", answer: "Has... tried", hint: { en: "Experience question.", uz: "Tajriba so'rog'i." } },
-      { type: 'choice', question: "I have ____ that book.", answer: "read", options: ["read", "readed", "reading"], hint: { en: "V3 of 'read'.", uz: "'Read' ning 3-shakli." } },
-      { type: 'writing', question: "My sister ____ (buy) a new dress.", answer: "has bought", hint: { en: "Recent action.", uz: "Yaqinda bo'lgan ish." } },
-      { type: 'choice', question: "Have they ____ their dinner?", answer: "had", options: ["have", "had", "has"], hint: { en: "V3 of 'have'.", uz: "'Have' ning 3-shakli." } }
+      { type: 'writing', question: "She ____ (lose) her keys.", answer: "has lost", hint: { en: "Recent result.", uz: "Yaqindagi natija." } }
     ]
   },
   {
@@ -375,29 +374,24 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'perfect',
     name: { en: "Present Perfect Continuous", uz: "Hozirgi tugallangan davomli" },
     description: { en: "Actions started in the past and still continuing.", uz: "O'tmishda boshlanib hali ham davom etayotgan ishlar." },
-    detailedExplanation: { en: "Have/Has been + V-ing.", uz: "Have/Has been + V-ing." },
+    detailedExplanation: { en: "Have/Has been + V-ing.", uz: "Have/Has been + been + fe'l-ing." },
     timeline: "Started in past, continuing now.",
-    whenToUse: { en: ["Duration"], uz: ["Davomiylik"] },
-    signalWords: ["for", "since"],
+    whenToUse: { en: ["Duration of action"], uz: ["Harakatning davomiyligi"] },
+    signalWords: ["for", "since", "all day"],
     commonMistakes: [{ wrong: "I have being", correct: "I have been", note: { en: "Use 'been'.", uz: "'been' ishlating." } }],
     structure: {
       positive: { rows: [{ subject: "I", verb: "have been playing", example: "I have been playing" }], formula: "S + have/has + been + V-ing" },
-      negative: { rows: [{ subject: "He", helper: "hasn't been", verb: "been playing", example: "He hasn't been playing" }], formula: "S + hasn't + been + V-ing" },
+      negative: { rows: [{ subject: "He", helper: "hasn't been", verb: "playing", example: "He hasn't been playing" }], formula: "S + hasn't + been + V-ing" },
       question: { rows: [{ helper: "How long", subject: "have you", verb: "been playing?", example: "How long have you been playing?" }], formula: "How long + have/has + S + been + V-ing?" },
       shortAnswers: "Yes, I have"
     },
-    examples: [{ sentence: "I **have been waiting** for 1 hour.", translation: "1 soatdan beri kutyapman.", type: 'positive', note: { en: "Duration", uz: "Davomiylik" } }],
+    examples: [
+      { sentence: "I **have been waiting** for an hour.", translation: "Men bir soatdan beri kutyapman.", type: 'positive', note: { en: "Duration", uz: "Davomiylik" } },
+      { sentence: "It **hasn't been raining** since morning.", translation: "Ertalabdan beri yomg'ir yog'mayapti.", type: 'negative', note: { en: "Negative", uz: "Inkor" } },
+      { sentence: "**Have** you **been studying** all day?", translation: "Kun bo'yi dars qilyapsizmi?", type: 'question', note: { en: "Question", uz: "So'roq" } }
+    ],
     practice: [
-      { type: 'writing', question: "It ____ ____ ____ (rain) all day.", answer: "has been raining", hint: { en: "Continuous duration.", uz: "Davomiy vaqt." } },
-      { type: 'choice', question: "I ____ been waiting for an hour.", answer: "have", options: ["has", "have", "am"], hint: { en: "Helper for 'I'.", uz: "'I' uchun yordamchi." } },
-      { type: 'writing', question: "They ____ ____ ____ (learn) English for 2 years.", answer: "have been learning", hint: { en: "Duration up to now.", uz: "Hozirgacha bo'lgan davom." } },
-      { type: 'choice', question: "How long ____ she been working here?", answer: "has", options: ["have", "has", "is"], hint: { en: "Helper for 'she'.", uz: "'She' uchun yordamchi." } },
-      { type: 'writing', question: "We ____ ____ ____ (not/sleep) well recently.", answer: "haven't been sleeping", hint: { en: "Negative duration.", uz: "Davomli inkor." } },
-      { type: 'choice', question: "My eyes are red because I ____.", answer: "have been crying", options: ["cried", "have been crying", "cry"], hint: { en: "Recent activity.", uz: "Yaqindagi davomli ish." } },
-      { type: 'writing', question: "You ____ ____ ____ (play) games all night!", answer: "have been playing", hint: { en: "Continued all night.", uz: "Tun bo'yi davom etgan." } },
-      { type: 'choice', question: "____ you been studying all morning?", answer: "Have", options: ["Has", "Have", "Are"], hint: { en: "Question form.", uz: "So'roq shakli." } },
-      { type: 'writing', question: "He ____ ____ ____ (work) since 8 AM.", answer: "has been working", hint: { en: "Duration with 'since'.", uz: "'Since' bilan davomiylik." } },
-      { type: 'choice', question: "The cat ____ been sleeping for hours.", answer: "has", options: ["have", "has", "is"], hint: { en: "Cat (singular).", uz: "Mushuk (birlik)." } }
+      { type: 'writing', question: "It ____ ____ ____ (rain) all day.", answer: "has been raining", hint: { en: "Continuous duration.", uz: "Davomiy vaqt." } }
     ]
   },
   {
@@ -406,29 +400,24 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'continuous',
     name: { en: "Past Continuous", uz: "O'tgan davomli zamon" },
     description: { en: "Actions in progress in the past.", uz: "O'tmishda ma'lum bir vaqtda davom etayotgan harakatlar." },
-    detailedExplanation: { en: "Was/Were + V-ing.", uz: "Was/Were + V-ing." },
+    detailedExplanation: { en: "Was/Were + V-ing.", uz: "O'tmishdagi ma'lum bir nuqtada davom etgan harakatlar." },
     timeline: "Ongoing past action.",
-    whenToUse: { en: ["Interrupted actions"], uz: ["Bo'lingan harakatlar"] },
-    signalWords: ["while", "when"],
+    whenToUse: { en: ["Interrupted actions", "Background story"], uz: ["Bo'lingan harakatlar", "Hikoya foni"] },
+    signalWords: ["while", "when", "at that time"],
     commonMistakes: [{ wrong: "They was", correct: "They were", note: { en: "Use were for they.", uz: "They uchun were ishlating." } }],
     structure: {
-      positive: { rows: [{ subject: "I/He/She/It", verb: "was playing", example: "I was playing" }], formula: "S + was/were + V-ing" },
+      positive: { rows: [{ subject: "I/He/She/It", verb: "was playing", example: "I was playing" }, { subject: "You/We/They", verb: "were playing", example: "We were playing" }], formula: "S + was/were + V-ing" },
       negative: { rows: [{ subject: "You", helper: "weren't", verb: "playing", example: "You weren't playing" }], formula: "S + wasn't/weren't + V-ing" },
       question: { rows: [{ helper: "Were", subject: "you", verb: "sleeping?", example: "Were you sleeping?" }], formula: "Was/Were + S + V-ing?" },
       shortAnswers: "Yes, I was"
     },
-    examples: [{ sentence: "I **was reading** when you called.", translation: "Siz qo'ng'iroq qilganingizda men o'qiyotgan edim.", type: 'positive', note: { en: "Interrupted", uz: "Bo'lingan" } }],
+    examples: [
+      { sentence: "I **was reading** when you called.", translation: "Siz qo'ng'iroq qilganingizda men o'qiyotgan edim.", type: 'positive', note: { en: "Interrupted action", uz: "Bo'lingan harakat" } },
+      { sentence: "They **were not working** at 5 PM.", translation: "Soat 5 da ular ishlashmayotgan edi.", type: 'negative', note: { en: "Negative", uz: "Inkor" } },
+      { sentence: "**Was** she **crying** when you saw her?", translation: "Uni ko'rganingizda u yig'layotgan edimi?", type: 'question', note: { en: "Question", uz: "So'roq" } }
+    ],
     practice: [
-      { type: 'writing', question: "What ____ you ____ (do) at 8 PM?", answer: "were... doing", hint: { en: "Past progress.", uz: "O'tgan davomiylik." } },
-      { type: 'choice', question: "While I ____, the phone rang.", answer: "was sleeping", options: ["sleep", "was sleeping", "slept"], hint: { en: "Ongoing action.", uz: "Davomli harakat." } },
-      { type: 'writing', question: "They ____ (not/work) when I saw them.", answer: "weren't working", hint: { en: "Negative progress.", uz: "O'tgan davomli inkor." } },
-      { type: 'choice', question: "____ it raining when you left?", answer: "Was", options: ["Is", "Was", "Did"], hint: { en: "Helper for 'it'.", uz: "'It' uchun yordamchi." } },
-      { type: 'writing', question: "We ____ (have) dinner at 7 PM yesterday.", answer: "were having", hint: { en: "Specific past time.", uz: "Aniq o'tgan vaqt." } },
-      { type: 'choice', question: "She ____ a book all night.", answer: "was reading", options: ["read", "was reading", "reads"], hint: { en: "Duration in past.", uz: "O'tmishdagi davomiylik." } },
-      { type: 'writing', question: "My mom ____ (cook) when the lights went out.", answer: "was cooking", hint: { en: "Past continuous action.", uz: "O'tgan davomli ish." } },
-      { type: 'choice', question: "Who ____ you talking to?", answer: "were", options: ["was", "were", "did"], hint: { en: "Helper for 'you'.", uz: "'You' uchun yordamchi." } },
-      { type: 'writing', question: "The sun ____ (shine) this morning.", answer: "was shining", hint: { en: "Background in past.", uz: "O'tgan fon." } },
-      { type: 'choice', question: "Birds ____ singing in the garden.", answer: "were", options: ["was", "were", "did"], hint: { en: "Birds (plural).", uz: "Qushlar (ko'plik)." } }
+      { type: 'writing', question: "What ____ you ____ (do) at 8 PM?", answer: "were... doing", hint: { en: "Past progress.", uz: "O'tgan davomiylik." } }
     ]
   },
   {
@@ -437,10 +426,10 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'continuous',
     name: { en: "Future Continuous", uz: "Kelasi davomli zamon" },
     description: { en: "Actions in progress in the future.", uz: "Kelajakda ma'lum bir vaqtda davom etayotgan bo'ladigan harakatlar." },
-    detailedExplanation: { en: "Will be + V-ing.", uz: "Will be + V-ing." },
+    detailedExplanation: { en: "Will be + V-ing.", uz: "Kelajakdagi ma'lum bir nuqtadagi davomiylik." },
     timeline: "Future progress.",
     whenToUse: { en: ["Specific future time"], uz: ["Aniq kelajak vaqti"] },
-    signalWords: ["at 9 PM tomorrow"],
+    signalWords: ["at this time tomorrow", "tomorrow morning"],
     commonMistakes: [{ wrong: "I will working", correct: "I will be working", note: { en: "Need be.", uz: "be kerak." } }],
     structure: {
       positive: { rows: [{ subject: "All", verb: "will be flying", example: "I will be flying" }], formula: "S + will be + V-ing" },
@@ -448,18 +437,13 @@ export const TENSES_DATA: TenseData[] = [
       question: { rows: [{ helper: "Will", subject: "you", verb: "be working?", example: "Will you be working?" }], formula: "Will + S + be + V-ing?" },
       shortAnswers: "Yes, I will"
     },
-    examples: [{ sentence: "I **will be lying** on the beach.", translation: "Plyajda yotgan bo'laman.", type: 'positive', note: { en: "Future moment", uz: "Kelajak" } }],
+    examples: [
+      { sentence: "I **will be lying** on the beach tomorrow.", translation: "Ertaga plyajda yotgan bo'laman.", type: 'positive', note: { en: "Future moment", uz: "Kelajakdagi lahza" } },
+      { sentence: "She **won't be sleeping** at 10 PM.", translation: "Soat 10 da u uxlamayotgan bo'ladi.", type: 'negative', note: { en: "Negative", uz: "Inkor" } },
+      { sentence: "**Will** you **be using** the car later?", translation: "Keyinroq mashinadan foydalanasizmi?", type: 'question', note: { en: "Polite question", uz: "Xushmuomala so'roq" } }
+    ],
     practice: [
-      { type: 'writing', question: "I ____ ____ ____ (fly) to London tomorrow morning.", answer: "will be flying", hint: { en: "Ongoing future.", uz: "Davomli kelajak." } },
-      { type: 'choice', question: "This time next week, we ____ on holiday.", answer: "will be", options: ["are", "will be", "be"], hint: { en: "Future state.", uz: "Kelasi holat." } },
-      { type: 'writing', question: "She ____ ____ ____ (not/work) at 10 PM.", answer: "won't be working", hint: { en: "Negative future progress.", uz: "Inkor kelasi davomli." } },
-      { type: 'choice', question: "____ you be using the car later?", answer: "Will", options: ["Do", "Are", "Will"], hint: { en: "Polite question.", uz: "Polite question." } },
-      { type: 'writing', question: "They ____ ____ ____ (watch) a movie at 9.", answer: "will be watching", hint: { en: "Action happening at 9.", uz: "So'roq 9da." } },
-      { type: 'choice', question: "I ____ sleeping when you arrive.", answer: "will be", options: ["am", "be", "will be"], hint: { en: "Future progress.", uz: "Kelasi davom." } },
-      { type: 'writing', question: "Who ____ ____ ____ (speak) at the conference?", answer: "will be speaking", hint: { en: "Who will be speaking?", uz: "Kim gapirayotgan bo'ladi?" } },
-      { type: 'choice', question: "It ____ snowing tomorrow morning.", answer: "will be", options: ["is", "will be", "be"], hint: { en: "Future prediction.", uz: "Kelajak bashorati." } },
-      { type: 'writing', question: "We ____ ____ ____ (wait) for you at the station.", answer: "will be waiting", hint: { en: "We will be waiting.", uz: "Kutib turgan bo'lamiz." } },
-      { type: 'choice', question: "Will they ____ playing football?", answer: "be", options: ["are", "be", "been"], hint: { en: "Helper verb.", uz: "Yordamchi fe'l." } }
+      { type: 'writing', question: "I ____ ____ ____ (fly) to London tomorrow morning.", answer: "will be flying", hint: { en: "Ongoing future.", uz: "Davomli kelajak." } }
     ]
   },
   {
@@ -468,10 +452,10 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'perfect',
     name: { en: "Past Perfect", uz: "O'tgan tugallangan zamon" },
     description: { en: "Completed before another past action.", uz: "O'tmishdagi boshqa bir harakatdan oldin tugagan harakat." },
-    detailedExplanation: { en: "Had + V3.", uz: "Had + V3." },
+    detailedExplanation: { en: "Had + V3.", uz: "O'tmishdan oldingi o'tmish." },
     timeline: "Past of the past.",
-    whenToUse: { en: ["Sequence"], uz: ["Ketma-ketlik"] },
-    signalWords: ["before", "by the time"],
+    whenToUse: { en: ["Action sequence in past"], uz: ["O'tmishdagi harakatlar ketma-ketligi"] },
+    signalWords: ["before", "by the time", "after", "already"],
     commonMistakes: [{ wrong: "I have had", correct: "I had had", note: { en: "Use had.", uz: "had ishlating." } }],
     structure: {
       positive: { rows: [{ subject: "All", verb: "had finished", example: "I had finished" }], formula: "S + had + V3" },
@@ -479,18 +463,13 @@ export const TENSES_DATA: TenseData[] = [
       question: { rows: [{ helper: "Had", subject: "you", verb: "eaten?", example: "Had you eaten?" }], formula: "Had + S + V3?" },
       shortAnswers: "Yes, I had"
     },
-    examples: [{ sentence: "When I arrived, the train **had left**.", translation: "Poezd ketib bo'lgan edi.", type: 'positive', note: { en: "First action", uz: "Birinchi ish" } }],
+    examples: [
+      { sentence: "When I arrived, the train **had left**.", translation: "Men kelganimda poyezd ketib bo'lgan edi.", type: 'positive', note: { en: "First action", uz: "Birinchi harakat" } },
+      { sentence: "I **hadn't seen** him before today.", translation: "Bugungacha uni ko'rmagan edim.", type: 'negative', note: { en: "Negative", uz: "Inkor" } },
+      { sentence: "**Had** you **finished** your work by 5?", translation: "Soat 5 gacha ishingizni tugatgan edingizmi?", type: 'question', note: { en: "Deadline question", uz: "Muddat so'rog'i" } }
+    ],
     practice: [
-      { type: 'writing', question: "She ____ (study) before the test.", answer: "had studied", hint: { en: "Prior action.", uz: "Oldingi harakat." } },
-      { type: 'choice', question: "By the time we arrived, they ____.", answer: "had left", options: ["leave", "have left", "had left"], hint: { en: "Past of the past.", uz: "O'tmishdan oldin." } },
-      { type: 'writing', question: "I ____ ____ (not/eat) anything before the party.", answer: "hadn't eaten", hint: { en: "Negative prior action.", uz: "O'tgan tugallangan inkor." } },
-      { type: 'choice', question: "____ you seen him before today?", answer: "Had", options: ["Have", "Had", "Did"], hint: { en: "Past question.", uz: "O'tmishdagi so'roq." } },
-      { type: 'writing', question: "When I woke up, the sun ____ ____ (rise).", answer: "had risen", hint: { en: "Action before waking up.", uz: "Uyg'ongunimcha bo'lgan ish." } },
-      { type: 'choice', question: "He said he ____ already done it.", answer: "had", options: ["has", "have", "had"], hint: { en: "Reported speech.", uz: "O'zlashtirma gap." } },
-      { type: 'writing', question: "They ____ ____ (finish) by 5 PM.", answer: "had finished", hint: { en: "Finished by 5 PM.", uz: "Soat 5 gacha tugagandi." } },
-      { type: 'choice', question: "I realized I ____ my keys.", answer: "had lost", options: ["lose", "lost", "had lost"], hint: { en: "Prior action.", uz: "Oldingi harakat." } },
-      { type: 'writing', question: "Who ____ (come) before me?", answer: "had come", hint: { en: "Came before me.", uz: "Mendan oldin kelgan." } },
-      { type: 'choice', question: "She ____ forgotten her umbrella.", answer: "had", options: ["have", "has", "had"], hint: { en: "Finished past.", uz: "Tugallangan o'tmish." } }
+      { type: 'writing', question: "She ____ (study) before the test.", answer: "had studied", hint: { en: "Prior action.", uz: "Oldingi harakat." } }
     ]
   },
   {
@@ -499,10 +478,10 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'perfect',
     name: { en: "Past Perfect Continuous", uz: "O'tgan tugallangan davomli" },
     description: { en: "Ongoing action before another past point.", uz: "O'tmishdagi boshqa bir vaqtgacha davom etgan harakat." },
-    detailedExplanation: { en: "Had been + V-ing.", uz: "Had been + V-ing." },
+    detailedExplanation: { en: "Had been + V-ing.", uz: "O'tmishdagi davomiylik." },
     timeline: "Past duration.",
-    whenToUse: { en: ["Past cause"], uz: ["O'tmish sababi"] },
-    signalWords: ["for", "since"],
+    whenToUse: { en: ["Cause of something in past"], uz: ["O'tmishdagi biror narsaning sababi"] },
+    signalWords: ["for", "since", "all morning"],
     commonMistakes: [{ wrong: "He was been", correct: "He had been", note: { en: "Use had been.", uz: "had been ishlating." } }],
     structure: {
       positive: { rows: [{ subject: "All", verb: "had been playing", example: "I had been playing" }], formula: "S + had been + V-ing" },
@@ -510,18 +489,13 @@ export const TENSES_DATA: TenseData[] = [
       question: { rows: [{ helper: "Had", subject: "you", verb: "been waiting?", example: "Had you been waiting?" }], formula: "Had + S + been + V-ing?" },
       shortAnswers: "Yes, I had"
     },
-    examples: [{ sentence: "He **had been working** hard.", translation: "U qattiq ishlayotgan edi.", type: 'positive', note: { en: "Cause", uz: "Sabab" } }],
+    examples: [
+      { sentence: "He **had been working** hard for hours.", translation: "U soatlab qattiq ishlayotgan edi.", type: 'positive', note: { en: "Past duration", uz: "O'tgan davomiylik" } },
+      { sentence: "We **hadn't been studying** long.", translation: "Biz uzoq dars qilmayotgan edik.", type: 'negative', note: { en: "Negative", uz: "Inkor" } },
+      { sentence: "**Had** she **been crying** before you came?", translation: "Kelishingizdan oldin u yig'layotgan edimi?", type: 'question', note: { en: "Question", uz: "So'roq" } }
+    ],
     practice: [
-      { type: 'writing', question: "They ____ ____ ____ (wait) for an hour before the bus came.", answer: "had been waiting", hint: { en: "Long past action.", uz: "Uzoq o'tgan harakat." } },
-      { type: 'choice', question: "She was out of breath because she ____.", answer: "had been running", options: ["ran", "has been running", "had been running"], hint: { en: "Past cause.", uz: "O'tmishdagi sabab." } },
-      { type: 'writing', question: "I ____ ____ ____ (not/study) long when he arrived.", answer: "hadn't been studying", hint: { en: "Negative past duration.", uz: "O'tgan davomli inkor." } },
-      { type: 'choice', question: "How long ____ they been playing?", answer: "had", options: ["have", "has", "had"], hint: { en: "Past duration question.", uz: "O'tmishdagi davomiylik." } },
-      { type: 'writing', question: "He ____ ____ ____ (work) there for 10 years before it closed.", answer: "had been working", hint: { en: "Duration before closing.", uz: "Yopilishidan oldin." } },
-      { type: 'choice', question: "Everything was wet. It ____.", answer: "had been raining", options: ["rained", "had been raining", "is raining"], hint: { en: "Past continuous cause.", uz: "O'tmishdagi sabab." } },
-      { type: 'writing', question: "____ you ____ ____ (live) here long?", answer: "Had... been living", hint: { en: "Past question.", uz: "O'tmish so'rog'i." } },
-      { type: 'choice', question: "We ____ been talking for hours.", answer: "had", options: ["have", "has", "had"], hint: { en: "Duration.", uz: "Davomiylik." } },
-      { type: 'writing', question: "She ____ ____ ____ (sleep) since morning.", answer: "had been sleeping", hint: { en: "Past duration.", uz: "O'tmishdagi davom." } },
-      { type: 'choice', question: "The car ____ been running well until today.", answer: "had", options: ["has", "had", "did"], hint: { en: "Past state.", uz: "O'tmishdagi holat." } }
+      { type: 'writing', question: "They ____ ____ ____ (wait) for an hour before the bus came.", answer: "had been waiting", hint: { en: "Long past action.", uz: "Uzoq o'tgan harakat." } }
     ]
   },
   {
@@ -530,10 +504,10 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'perfect',
     name: { en: "Future Perfect", uz: "Kelasi tugallangan zamon" },
     description: { en: "Completed by a future time.", uz: "Kelajakdagi ma'lum bir vaqtgacha tugallanadigan harakat." },
-    detailedExplanation: { en: "Will have + V3.", uz: "Will have + V3." },
+    detailedExplanation: { en: "Will have + V3.", uz: "Kelajakdagi ma'lum bir nuqtadagi natija." },
     timeline: "Future completion.",
-    whenToUse: { en: ["Deadlines"], uz: ["Muddatlar"] },
-    signalWords: ["by next year"],
+    whenToUse: { en: ["Deadlines in future"], uz: ["Kelajakdagi muddatlar"] },
+    signalWords: ["by next week", "by 2030", "by then"],
     commonMistakes: [{ wrong: "I will have finish", correct: "I will have finished", note: { en: "Use V3.", uz: "V3 ishlating." } }],
     structure: {
       positive: { rows: [{ subject: "All", verb: "will have graduated", example: "I will have graduated" }], formula: "S + will have + V3" },
@@ -541,18 +515,13 @@ export const TENSES_DATA: TenseData[] = [
       question: { rows: [{ helper: "Will", subject: "you", verb: "have finished?", example: "Will you have finished?" }], formula: "Will + S + have + V3?" },
       shortAnswers: "Yes, I will"
     },
-    examples: [{ sentence: "By 2026, I **will have graduated**.", translation: "2026-yilgacha bitirib bo'laman.", type: 'positive', note: { en: "Deadline", uz: "Muddat" } }],
+    examples: [
+      { sentence: "By 2026, I **will have graduated**.", translation: "2026-yilgacha o'qishni bitirib bo'laman.", type: 'positive', note: { en: "Deadline", uz: "Muddat" } },
+      { sentence: "They **won't have finished** by tomorrow.", translation: "Ertagacha ular tugatib bo'lishmaydi.", type: 'negative', note: { en: "Negative", uz: "Inkor" } },
+      { sentence: "**Will** you **have arrived** by 6 PM?", translation: "Soat 6 gacha yetib kelasizmi?", type: 'question', note: { en: "Question", uz: "So'roq" } }
+    ],
     practice: [
-      { type: 'writing', question: "By 6 PM, we ____ ____ (eat) dinner.", answer: "will have eaten", hint: { en: "Finished by 6.", uz: "6gacha tugaydi." } },
-      { type: 'choice', question: "They ____ finished by next week.", answer: "will have", options: ["will", "will have", "have"], hint: { en: "Future completion.", uz: "Kelasi tugallanish." } },
-      { type: 'writing', question: "I ____ ____ (not/complete) it by then.", answer: "won't have completed", hint: { en: "Negative future perfect.", uz: "Kelasi tugallangan inkor." } },
-      { type: 'choice', question: "____ you have arrived by noon?", answer: "Will", options: ["Do", "Will", "Are"], hint: { en: "Future question.", uz: "Kelasi zamon so'rog'i." } },
-      { type: 'writing', question: "She ____ ____ (buy) a house by 2030.", answer: "will have bought", hint: { en: "Action finished by 2030.", uz: "2030 gacha." } },
-      { type: 'choice', question: "The movie ____ started by the time we get there.", answer: "will have", options: ["will", "will have", "is"], hint: { en: "Future perfect.", uz: "Kelasi tugallangan." } },
-      { type: 'writing', question: "Who ____ ____ (do) it by Friday?", answer: "will have done", hint: { en: "Who will have done it?", uz: "Juma gacha kim?" } },
-      { type: 'choice', question: "By tomorrow, I ____ have finished.", answer: "will", options: ["will", "am", "do"], hint: { en: "Future prediction.", uz: "Kelajak bashorati." } },
-      { type: 'writing', question: "We ____ ____ (return) by 10.", answer: "will have returned", hint: { en: "We will return by 10.", uz: "10 gacha qaytamiz." } },
-      { type: 'choice', question: "He will ____ finished by then.", answer: "have", options: ["have", "has", "be"], hint: { en: "'Have' after will.", uz: "Willdan keyin 'have'." } }
+      { type: 'writing', question: "By 6 PM, we ____ ____ (eat) dinner.", answer: "will have eaten", hint: { en: "Finished by 6.", uz: "6gacha tugaydi." } }
     ]
   },
   {
@@ -561,10 +530,10 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'perfect',
     name: { en: "Future Perfect Continuous", uz: "Kelasi tugallangan davomli" },
     description: { en: "Duration up to a future point.", uz: "Kelajakdagi bir vaqtgacha harakat qancha davom etgan bo'lishini ko'rsatadi." },
-    detailedExplanation: { en: "Will have been + V-ing.", uz: "Will have been + V-ing." },
+    detailedExplanation: { en: "Will have been + V-ing.", uz: "Kelajakdagi muddatgacha bo'lgan davomiylik." },
     timeline: "Future duration count.",
-    whenToUse: { en: ["Duration count"], uz: ["Vaqtni hisoblash"] },
-    signalWords: ["for 5 years"],
+    whenToUse: { en: ["Counting duration to future"], uz: ["Kelajakdagi vaqtni hisoblash"] },
+    signalWords: ["for 5 years", "for 10 months", "by then"],
     commonMistakes: [{ wrong: "I will have being", correct: "I will have been", note: { en: "Use been.", uz: "been ishlating." } }],
     structure: {
       positive: { rows: [{ subject: "All", verb: "will have been living", example: "I will have been living" }], formula: "S + will have been + V-ing" },
@@ -572,18 +541,13 @@ export const TENSES_DATA: TenseData[] = [
       question: { rows: [{ helper: "How long", subject: "will you", verb: "have been studying?", example: "How long will you have been studying?" }], formula: "How long + will + S + have + been + V-ing?" },
       shortAnswers: "Yes, I will"
     },
-    examples: [{ sentence: "I **will have been working** here for a year.", translation: "Bu yerda bir yildan beri ishlayotgan bo'laman.", type: 'positive', note: { en: "Count", uz: "Hisoblash" } }],
+    examples: [
+      { sentence: "I **will have been working** here for a year.", translation: "Keyinroq bu yerda ishlayotganimga bir yil bo'ladi.", type: 'positive', note: { en: "Count", uz: "Hisoblash" } },
+      { sentence: "We **won't have been waiting** long.", translation: "Uzoq kutayotgan bo'lmaymiz.", type: 'negative', note: { en: "Negative", uz: "Inkor" } },
+      { sentence: "**Will** you **have been playing** for 3 hours?", translation: "O'shanda 3 soatdan beri o'ynayotgan bo'lasizmi?", type: 'question', note: { en: "Question", uz: "So'roq" } }
+    ],
     practice: [
-      { type: 'writing', question: "Next month, she ____ ____ ____ ____ (live) here for two years.", answer: "will have been living", hint: { en: "Future duration count.", uz: "Kelajakdagi davomni hisoblash." } },
-      { type: 'choice', question: "By 2025, I ____ teaching for 10 years.", answer: "will have been", options: ["will be", "will have been", "have been"], hint: { en: "Long duration in future.", uz: "Kelajakdagi davom." } },
-      { type: 'writing', question: "We ____ ____ ____ ____ (not/wait) long by then.", answer: "won't have been waiting", hint: { en: "Negative future perfect continuous.", uz: "Inkor kelasi." } },
-      { type: 'choice', question: "____ they have been playing for 3 hours?", answer: "Will", options: ["Do", "Will", "Are"], hint: { en: "Future question.", uz: "Kelasi zamon so'rog'i." } },
-      { type: 'writing', question: "He ____ ____ ____ ____ (study) for 5 hours by noon.", answer: "will have been studying", hint: { en: "It will be 5 hours by noon.", uz: "Tushgacha 5 soat." } },
-      { type: 'choice', question: "I will have ____ living here for a month.", answer: "been", options: ["be", "been", "being"], hint: { en: "Time duration (been).", uz: "been." } },
-      { type: 'writing', question: "How long ____ you ____ ____ ____ (work) by 2030?", answer: "will... have been working", hint: { en: "How long will you work?", uz: "2030 gacha." } },
-      { type: 'choice', question: "She ____ have been sleeping for 8 hours.", answer: "will", options: ["will", "is", "has"], hint: { en: "Future prediction.", uz: "Kelajak bashorati." } },
-      { type: 'writing', question: "They ____ ____ ____ ____ (talk) for hours.", answer: "will have been talking", hint: { en: "It will be several hours.", uz: "Bir necha soat bo'ladi." } },
-      { type: 'choice', question: "By next week, we will ____ been waiting long.", answer: "have", options: ["have", "has", "be"], hint: { en: "'Have' after will.", uz: "Willdan keyin 'have'." } }
+      { type: 'writing', question: "Next month, she ____ ____ ____ ____ (live) here for two years.", answer: "will have been living", hint: { en: "Future duration count.", uz: "Kelajakdagi davomni hisoblash." } }
     ]
   },
   {
@@ -592,10 +556,10 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'future',
     name: { en: "Future-in-the-Past Simple", uz: "O'tgan kelasi zamon" },
     description: { en: "Future relative to the past.", uz: "O'tmish nuqtai nazaridan kelajak." },
-    detailedExplanation: { en: "Would + V.", uz: "Would + V." },
+    detailedExplanation: { en: "Would + V.", uz: "O'tmishdagi kelajak." },
     timeline: "Future relative to past point.",
-    whenToUse: { en: ["Reported speech"], uz: ["O'zlashtirma gap"] },
-    signalWords: ["said that"],
+    whenToUse: { en: ["Reported speech", "Conditional"], uz: ["O'zlashtirma gap", "Shart gap"] },
+    signalWords: ["said that", "thought that", "promised that"],
     commonMistakes: [{ wrong: "I thought I will", correct: "I thought I would", note: { en: "Use would.", uz: "would ishlating." } }],
     structure: {
       positive: { rows: [{ subject: "All", verb: "would go", example: "I would go" }], formula: "S + would + V" },
@@ -603,18 +567,13 @@ export const TENSES_DATA: TenseData[] = [
       question: { rows: [{ helper: "Would", subject: "you", verb: "go?", example: "Would you go?" }], formula: "Would + S + V?" },
       shortAnswers: "Yes, I would"
     },
-    examples: [{ sentence: "I knew you **would help** me.", translation: "Yordam berishingizni bilgan edim.", type: 'positive', note: { en: "Prediction", uz: "Bashorat" } }],
+    examples: [
+      { sentence: "I knew you **would help** me.", translation: "Menga yordam berishingizni bilgan edim.", type: 'positive', note: { en: "Prediction in past", uz: "O'tmishdagi bashorat" } },
+      { sentence: "She said she **wouldn't come**.", translation: "U kelmasligini aytdi.", type: 'negative', note: { en: "Negative reported", uz: "O'zlashtirma inkor" } },
+      { sentence: "**Would** you **marry** her, I wondered.", translation: "Unga uylanarmidingiz, deb o'yladim.", type: 'question', note: { en: "Question in past", uz: "O'tmishdagi so'roq" } }
+    ],
     practice: [
-      { type: 'writing', question: "She said she ____ (call) me.", answer: "would call", hint: { en: "Reported future.", uz: "O'zlashtirilgan kelajak." } },
-      { type: 'choice', question: "I thought I ____ win.", answer: "would", options: ["will", "would", "shall"], hint: { en: "Future in past.", uz: "O'tmishdagi kelajak." } },
-      { type: 'writing', question: "We knew they ____ (not/come).", answer: "wouldn't come", hint: { en: "Negative intention.", uz: "Inkor niyat." } },
-      { type: 'choice', question: "____ he marry her, he asked himself.", answer: "Would", options: ["Will", "Would", "Did"], hint: { en: "Past thought.", uz: "O'tmishdagi o'y." } },
-      { type: 'writing', question: "They hoped we ____ (help).", answer: "would help", hint: { en: "Hoped they would help.", uz: "Umid qilishdi." } },
-      { type: 'choice', question: "I was sure it ____ happen.", answer: "would", options: ["will", "would", "is"], hint: { en: "Past certainty.", uz: "O'tmishdagi ishonch." } },
-      { type: 'writing', question: "Who ____ (know) that?", answer: "would know", hint: { en: "Who would know?", uz: "Kim bilgan deysiz?" } },
-      { type: 'choice', question: "He promised he ____ be there.", answer: "would", options: ["will", "would", "be"], hint: { en: "Promise.", uz: "Va'da." } },
-      { type: 'writing', question: "I thought it ____ (rain).", answer: "would rain", hint: { en: "I thought it would rain.", uz: "Yog'adi deb o'yladim." } },
-      { type: 'choice', question: "Would you ____ me if I asked?", answer: "help", options: ["help", "helped", "helping"], hint: { en: "Base verb after would.", uz: "Asosiy fe'l." } }
+      { type: 'writing', question: "She said she ____ (call) me.", answer: "would call", hint: { en: "Reported future.", uz: "O'zlashtirilgan kelajak." } }
     ]
   },
   {
@@ -623,10 +582,10 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'continuous',
     name: { en: "Future-in-the-Past Continuous", uz: "O'tgan kelasi davomli" },
     description: { en: "Future progress from past perspective.", uz: "O'tmishda turib kelajakda davom etishi tasavvur qilingan harakat." },
-    detailedExplanation: { en: "Would be + V-ing.", uz: "Would be + V-ing." },
+    detailedExplanation: { en: "Would be + V-ing.", uz: "O'tmishdagi kelajak davomiyligi." },
     timeline: "Past future progress.",
-    whenToUse: { en: ["Past plans"], uz: ["O'tmish rejalari"] },
-    signalWords: ["thought"],
+    whenToUse: { en: ["Past plans for progress"], uz: ["O'tmishdagi davomli rejalar"] },
+    signalWords: ["thought", "hoped", "imagined"],
     commonMistakes: [{ wrong: "I said I will be", correct: "I said I would be", note: { en: "Use would be.", uz: "would be ishlating." } }],
     structure: {
       positive: { rows: [{ subject: "All", verb: "would be playing", example: "I would be playing" }], formula: "S + would be + V-ing" },
@@ -634,18 +593,13 @@ export const TENSES_DATA: TenseData[] = [
       question: { rows: [{ helper: "Would", subject: "you", verb: "be staying?", example: "Would you be staying?" }], formula: "Would + S + be + V-ing?" },
       shortAnswers: "Yes, I would"
     },
-    examples: [{ sentence: "I thought I **would be working**.", translation: "Ishlayotgan bo'laman deb o'yladim.", type: 'positive', note: { en: "Perspective", uz: "Nuqtai nazar" } }],
+    examples: [
+      { sentence: "I thought I **would be working** now.", translation: "Hozir ishlayotgan bo'laman deb o'ylagan edim.", type: 'positive', note: { en: "Past plan", uz: "O'tmishdagi reja" } },
+      { sentence: "They expected we **wouldn't be staying**.", translation: "Biz qolmasligimizni kutishgan edi.", type: 'negative', note: { en: "Negative", uz: "Inkor" } },
+      { sentence: "**Would** she **be waiting** for us?", translation: "U bizni kutib turarmidi?", type: 'question', note: { en: "Question", uz: "So'roq" } }
+    ],
     practice: [
-      { type: 'writing', question: "He hoped they ____ ____ (wait) for him.", answer: "would be waiting", hint: { en: "Expected progress.", uz: "Kutilgan davomiylik." } },
-      { type: 'choice', question: "I knew she ____ studying.", answer: "would be", options: ["will be", "would be", "is"], hint: { en: "Future progress in past.", uz: "O'tmishdagi kelasi davom." } },
-      { type: 'writing', question: "They thought we ____ ____ (not/work).", answer: "wouldn't be working", hint: { en: "Negative past future continuous.", uz: "Inkor o'tgan." } },
-      { type: 'choice', question: "____ you be living here then?", answer: "Would", options: ["Will", "Would", "Are"], hint: { en: "Thought question.", uz: "O'y-fikr so'rog'i." } },
-      { type: 'writing', question: "He said he ____ ____ (cook) dinner.", answer: "would be cooking", hint: { en: "He said he would be cooking.", uz: "Degandi." } },
-      { type: 'choice', question: "I thought the sun ____ shining.", answer: "would be", options: ["is", "would be", "will be"], hint: { en: "Prediction.", uz: "Bashorat." } },
-      { type: 'writing', question: "Who ____ ____ ____ (teach) the class?", answer: "would be teaching", hint: { en: "Who would be teaching?", uz: "Kim?" } },
-      { type: 'choice', question: "We knew they ____ playing.", answer: "would be", options: ["will be", "would be", "were"], hint: { en: "Past perspective.", uz: "O'tmish." } },
-      { type: 'writing', question: "I imagined I ____ ____ (lie) on the beach.", answer: "would be lying", hint: { en: "Imagining (continuous).", uz: "Tasavvur." } },
-      { type: 'choice', question: "Would she ____ working at 10?", answer: "be", options: ["be", "are", "is"], hint: { en: "Helper (be).", uz: "Yordamchi (be)." } }
+      { type: 'writing', question: "He hoped they ____ ____ (wait) for him.", answer: "would be waiting", hint: { en: "Expected progress.", uz: "Kutilgan davomiylik." } }
     ]
   },
   {
@@ -654,10 +608,10 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'perfect',
     name: { en: "Future-in-the-Past Perfect", uz: "O'tgan kelasi tugallangan" },
     description: { en: "Completion imagined from the past point.", uz: "O'tmishda turib kelajakda tugallanishi tasavvur qilingan harakat." },
-    detailedExplanation: { en: "Would have + V3.", uz: "Would have + V3." },
+    detailedExplanation: { en: "Would have + V3.", uz: "O'tmishdagi kelajak natijasi." },
     timeline: "Past future completion.",
-    whenToUse: { en: ["Expectations"], uz: ["Kutuvlar"] },
-    signalWords: ["expected"],
+    whenToUse: { en: ["Expectations in past"], uz: ["O'tmishdagi kutuvlar"] },
+    signalWords: ["expected", "assured"],
     commonMistakes: [{ wrong: "I thought I will have", correct: "I thought I would have", note: { en: "Need V3 (finished).", uz: "V3 shakli kerak." } }],
     structure: {
       positive: { rows: [{ subject: "All", verb: "would have finished", example: "I would have finished" }], formula: "S + would have + V3" },
@@ -665,18 +619,13 @@ export const TENSES_DATA: TenseData[] = [
       question: { rows: [{ helper: "Would", subject: "you", verb: "have gone?", example: "Would you have gone?" }], formula: "Would + S + have + V3?" },
       shortAnswers: "Yes, I would"
     },
-    examples: [{ sentence: "He expected he **would have arrived**.", translation: "Yetib kelgan bo'lishini kutgan edi.", type: 'positive', note: { en: "Expectation", uz: "Kutuv" } }],
+    examples: [
+      { sentence: "He expected he **would have arrived** by now.", translation: "U hozirgacha yetib kelgan bo'lishini kutgan edi.", type: 'positive', note: { en: "Expectation", uz: "Kutuv" } },
+      { sentence: "I knew they **wouldn't have finished**.", translation: "Ular tugata olmasligini bilardim.", type: 'negative', note: { en: "Negative", uz: "Inkor" } },
+      { sentence: "**Would** you **have helped** him back then?", translation: "O'shanda unga yordam bergan bo'larmidingiz?", type: 'question', note: { en: "Conditional question", uz: "Shartli so'roq" } }
+    ],
     practice: [
-      { type: 'writing', question: "I knew she ____ ____ (see) it by noon.", answer: "would have seen", hint: { en: "Past future perfect.", uz: "O'tgan kelasi tugallangan." } },
-      { type: 'choice', question: "He thought he ____ finished.", answer: "would have", options: ["will have", "would have", "had"], hint: { en: "Completion in past future.", uz: "Kelasi tugallanish." } },
-      { type: 'writing', question: "They ____ ____ ____ (not/arrive) yet.", answer: "wouldn't have arrived", hint: { en: "Negative past future perfect.", uz: "Inkor o'tgan." } },
-      { type: 'choice', question: "____ you have done it by Friday?", answer: "Would", options: ["Will", "Would", "Did"], hint: { en: "Question (past future).", uz: "So'roq." } },
-      { type: 'writing', question: "We hoped the rain ____ ____ (stop).", answer: "would have stopped", hint: { en: "We hoped it would have stopped.", uz: "Umid qildik." } },
-      { type: 'choice', question: "I was sure they ____ won.", answer: "would have", options: ["will have", "would have", "had"], hint: { en: "Past certainty.", uz: "O'tmish." } },
-      { type: 'writing', question: "Who ____ ____ (buy) it by then?", answer: "would have bought", hint: { en: "Who would have bought?", uz: "Kim?" } },
-      { type: 'choice', question: "She said she ____ have returned.", answer: "would", options: ["will", "would", "has"], hint: { en: "Reported speech.", uz: "Gap." } },
-      { type: 'writing', question: "I thought you ____ ____ (forget).", answer: "would have forgotten", hint: { en: "I thought you would have forgotten.", uz: "O'yladim." } },
-      { type: 'choice', question: "Would he ____ liked it?", answer: "have", options: ["have", "has", "had"], hint: { en: "'Have' after would.", uz: "have." } }
+      { type: 'writing', question: "I knew she ____ ____ (see) it by noon.", answer: "would have seen", hint: { en: "Past future perfect.", uz: "O'tgan kelasi tugallangan." } }
     ]
   },
   {
@@ -685,10 +634,10 @@ export const TENSES_DATA: TenseData[] = [
     colorTheme: 'perfect',
     name: { en: "Future-in-the-Past Perfect Continuous", uz: "O'tgan kelasi tugallangan davomli" },
     description: { en: "Duration imagined from a past viewpoint.", uz: "O'tmish nuqtai nazaridan kelajakda harakat qancha davom etgan bo'lishini bildiradi." },
-    detailedExplanation: { en: "Would have been + V-ing.", uz: "Would have been + V-ing." },
+    detailedExplanation: { en: "Would have been + V-ing.", uz: "O'tmishdagi kelajak davomiyligi hisobi." },
     timeline: "Counting duration.",
-    whenToUse: { en: ["Predictions"], uz: ["Bashoratlar"] },
-    signalWords: ["since"],
+    whenToUse: { en: ["Past predictions of duration"], uz: ["O'tmishdagi davomiylik bashoratlari"] },
+    signalWords: ["for years", "since", "all day long"],
     commonMistakes: [{ wrong: "He would having", correct: "He would have", note: { en: "Use have.", uz: "have ishlating." } }],
     structure: {
       positive: { rows: [{ subject: "All", verb: "would have been living", example: "I would have been living" }], formula: "S + would have been + V-ing" },
@@ -696,18 +645,13 @@ export const TENSES_DATA: TenseData[] = [
       question: { rows: [{ helper: "How long", subject: "would he", verb: "have been working?", example: "How long would he have been working?" }], formula: "How long + would + S + have + been + V-ing?" },
       shortAnswers: "Yes, he would"
     },
-    examples: [{ sentence: "I knew I **would have been teaching** for 10 years.", translation: "10 yildan beri dars berayotgan bo'lishimni bilar edim.", type: 'positive', note: { en: "Duration", uz: "Davomiylik" } }],
+    examples: [
+      { sentence: "I knew I **would have been teaching** for 10 years.", translation: "O'shanda 10 yildan beri dars berayotgan bo'lishimni bilardim.", type: 'positive', note: { en: "Duration count", uz: "Vaqt hisobi" } },
+      { sentence: "She said we **wouldn't have been waiting** long.", translation: "U uzoq kutayotgan bo'lmaymiz, degan edi.", type: 'negative', note: { en: "Negative", uz: "Inkor" } },
+      { sentence: "**Would** they **have been playing** for 5 hours?", translation: "Ular 5 soatdan beri o'ynayotgan bo'larmidilar?", type: 'question', note: { en: "Question", uz: "So'roq" } }
+    ],
     practice: [
-      { type: 'writing', question: "I thought they ____ ____ ____ ____ (wait) for hours.", answer: "would have been waiting", hint: { en: "Past predicted duration.", uz: "O'tmishda bashorat qilingan davomiylik." } },
-      { type: 'choice', question: "By then, I ____ living here for a year.", answer: "would have been", options: ["will be", "would have been", "was"], hint: { en: "Duration in past future.", uz: "O'tmish." } },
-      { type: 'writing', question: "She knew we ____ ____ ____ ____ (not/sleep) much.", answer: "wouldn't have been sleeping", hint: { en: "Negative past future perfect continuous.", uz: "Inkor." } },
-      { type: 'choice', question: "____ he have been working since 8?", answer: "Would", options: ["Will", "Would", "Did"], hint: { en: "Question form.", uz: "So'roq shakli." } },
-      { type: 'writing', question: "We expected they ____ ____ ____ ____ (play) all day.", answer: "would have been playing", hint: { en: "Duration.", uz: "Davomiylik." } },
-      { type: 'choice', question: "I thought she would ____ been waiting.", answer: "have", options: ["have", "has", "had"], hint: { en: "'Have' after would.", uz: "have." } },
-      { type: 'writing', question: "By noon, I ____ ____ ____ ____ (study) for 5 hours.", answer: "would have been studying", hint: { en: "Past prediction.", uz: "Bashorat." } },
-      { type: 'choice', question: "He would have ____ working for years.", answer: "been", options: ["be", "been", "being"], hint: { en: "Time duration.", uz: "been." } },
-      { type: 'writing', question: "They ____ ____ ____ ____ (talk) for an hour.", answer: "would have been talking", hint: { en: "It would have been an hour.", uz: "Bir soat." } },
-      { type: 'choice', question: "I knew you ____ have been helping him.", answer: "would", options: ["will", "would", "could"], hint: { en: "Past perspective.", uz: "Nuqtai nazar." } }
+      { type: 'writing', question: "I thought they ____ ____ ____ ____ (wait) for hours.", answer: "would have been waiting", hint: { en: "Past predicted duration.", uz: "O'tmishda bashorat qilingan davomiylik." } }
     ]
   }
 ];

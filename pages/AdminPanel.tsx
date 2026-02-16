@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Language, User } from '../types';
 import { UI_STRINGS } from '../constants';
-import { Users, Zap, ShieldCheck, ArrowRight, UserCheck, Phone, LogOut, RefreshCcw } from 'lucide-react';
-import { db } from '../database';
+import { Users, Zap, ShieldCheck, ArrowRight, UserCheck, Phone, LogOut, RefreshCcw, Wifi, WifiOff } from 'lucide-react';
+import { db, supabase } from '../database';
 
 interface AdminPanelProps {
   lang: Language;
@@ -17,7 +17,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
   const [giftTargetCode, setGiftTargetCode] = useState('');
   const [giftAmount, setGiftAmount] = useState<number>(0);
   const [status, setStatus] = useState('');
+  const [isOnline, setIsOnline] = useState(true);
 
+  // Foydalanuvchilarni bazadan yuklash
   const loadUsers = async () => {
     setLoading(true);
     const data = await db.getAllUsers();
@@ -27,30 +29,59 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
 
   useEffect(() => {
     loadUsers();
+
+    // REAL-TIME: Bazadagi 'users' jadvalini kuzatish
+    if (supabase) {
+      const channel = supabase
+        .channel('admin-live-updates')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'users' },
+          (payload) => {
+            console.log('Baza o\'zgardi, ma\'lumotlar yangilanmoqda...', payload);
+            loadUsers(); // Har qanday o'zgarishda (yangi user yoki XP o'zgarishi) ro'yxatni yangilaymiz
+          }
+        )
+        .subscribe((status) => {
+          setIsOnline(status === 'SUBSCRIBED');
+        });
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, []);
 
   const handleGiftXP = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus('');
+    if (!giftTargetCode || !giftAmount) return;
+    
+    setStatus(lang === 'uz' ? "Yuborilmoqda..." : "Sending...");
     
     const success = await db.giftXPByCode(giftTargetCode, giftAmount);
     if (success) {
-      setStatus(lang === 'uz' ? "XP muvaffaqiyatli yuborildi!" : "XP successfully sent!");
+      setStatus(lang === 'uz' ? "XP muvaffaqiyatli yuborildi! ⚡" : "XP successfully sent! ⚡");
       setGiftAmount(0);
       setGiftTargetCode('');
-      loadUsers(); // Refresh list
+      // loadUsers() chaqirish shart emas, chunki realtime subscription o'zi yangilaydi
     } else {
-      setStatus(lang === 'uz' ? "Xatolik! Foydalanuvchi topilmadi." : "Error! User not found.");
+      setStatus(lang === 'uz' ? "Xatolik! Foydalanuvchi topilmadi yoki baza ulanmadi." : "Error! User not found or DB disconnected.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-12 space-y-10 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-slate-50 p-6 md:p-12 space-y-10 animate-in fade-in duration-500 pb-40">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-2">
-           <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-2xl shadow-xl">
-             <ShieldCheck size={20} />
-             <span className="font-black text-xs uppercase tracking-widest">{strings.adminPanel}</span>
+           <div className="flex items-center gap-3">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-2xl shadow-xl">
+                <ShieldCheck size={20} />
+                <span className="font-black text-xs uppercase tracking-widest">{strings.adminPanel}</span>
+              </div>
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${isOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                {isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
+                {isOnline ? 'Live' : 'Offline'}
+              </div>
            </div>
            <h1 className="text-4xl font-black text-slate-900">Control Center</h1>
         </div>
@@ -110,9 +141,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                        {users.map((u, i) => (
-                          <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                          <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
                              <td className="px-8 py-6">
-                                <div className="font-black text-slate-900">{u.fullName}</div>
+                                <div className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors">{u.fullName}</div>
                                 <div className="text-xs font-mono font-black text-emerald-600">{u.userCode}</div>
                              </td>
                              <td className="px-8 py-6">
@@ -134,8 +165,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
                        ))}
                     </tbody>
                  </table>
-                 {(users.length === 0 && !loading) && <div className="py-20 text-center text-slate-300 font-black uppercase tracking-widest">No users in central database</div>}
-                 {loading && <div className="py-20 text-center text-slate-300 animate-pulse font-black uppercase">Fetching cloud data...</div>}
+                 {(users.length === 0 && !loading) && <div className="py-20 text-center text-slate-300 font-black uppercase tracking-widest">Bazadan foydalanuvchilar topilmadi</div>}
+                 {loading && <div className="py-20 text-center text-slate-300 animate-pulse font-black uppercase">Bulutli bazadan yuklanmoqda...</div>}
               </div>
            </div>
         </div>

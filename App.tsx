@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Language, User, AuthState } from './types';
-import { LEVELS, UI_STRINGS } from './constants';
+import { UI_STRINGS } from './constants';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
@@ -12,14 +12,12 @@ import PandaMascot from './components/PandaMascot';
 import AuthPage from './pages/AuthPage';
 import SplashScreen from './components/SplashScreen';
 import AdminPanel from './pages/AdminPanel';
-import { db } from './database';
+import { db, supabase } from './database';
 
 const UNLOCK_COST = 200;
 
 const App: React.FC = () => {
-  const [lang, setLang] = useState<Language>(() => {
-    return (localStorage.getItem('tg_lang') as Language) || 'uz';
-  });
+  const [lang, setLang] = useState<Language>(() => (localStorage.getItem('tg_lang') as Language) || 'uz');
   const [currentPath, setCurrentPath] = useState('/dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -28,13 +26,7 @@ const App: React.FC = () => {
   const [auth, setAuth] = useState<AuthState>(() => {
     const saved = localStorage.getItem('tg_current_session');
     const isAdmin = localStorage.getItem('tg_admin_mode') === 'true';
-    
-    if (isAdmin && saved) {
-      return { currentUser: JSON.parse(saved), isAuthenticated: true, isAdmin: true };
-    }
-    if (saved) {
-      return { currentUser: JSON.parse(saved), isAuthenticated: true, isAdmin: false };
-    }
+    if (saved) return { currentUser: JSON.parse(saved), isAuthenticated: true, isAdmin };
     return { currentUser: null, isAuthenticated: false, isAdmin: false };
   });
 
@@ -42,19 +34,32 @@ const App: React.FC = () => {
     localStorage.setItem('tg_lang', lang);
   }, [lang]);
 
-  // Central Sync: Polling for updates (e.g. from other devices or admin)
+  // Real-time profil yangilash (XP yoki progress o'zgarganda darhol saytda aks etadi)
   useEffect(() => {
-    if (auth.isAuthenticated && !auth.isAdmin && auth.currentUser) {
-      const interval = setInterval(async () => {
-        const freshUser = await db.getUserByUsername(auth.currentUser!.username);
-        if (freshUser && JSON.stringify(freshUser.progress) !== JSON.stringify(auth.currentUser?.progress)) {
-           setAuth(prev => ({ ...prev, currentUser: freshUser }));
-           localStorage.setItem('tg_current_session', JSON.stringify(freshUser));
-        }
-      }, 5000);
-      return () => clearInterval(interval);
+    if (auth.isAuthenticated && auth.currentUser && supabase) {
+      const channel = supabase
+        .channel(`user-${auth.currentUser.username}`)
+        .on('postgres_changes', { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'users', 
+          filter: `username=eq.${auth.currentUser.username}` 
+        }, (payload) => {
+          const updatedUser: User = {
+            fullName: payload.new.full_name,
+            username: payload.new.username,
+            phone: payload.new.phone,
+            password: payload.new.password,
+            userCode: payload.new.user_code,
+            progress: payload.new.progress
+          };
+          setAuth(prev => ({ ...prev, currentUser: updatedUser }));
+          localStorage.setItem('tg_current_session', JSON.stringify(updatedUser));
+        })
+        .subscribe();
+      return () => { supabase.removeChannel(channel); };
     }
-  }, [auth.isAuthenticated, auth.isAdmin, auth.currentUser]);
+  }, [auth.isAuthenticated, auth.currentUser?.username]);
 
   const handleLogin = (user: User, isAdmin: boolean = false) => {
     setAuth({ currentUser: user, isAuthenticated: true, isAdmin });
@@ -75,155 +80,58 @@ const App: React.FC = () => {
   }, []);
 
   const handleNavigate = (path: string) => {
-    if (!auth.isAuthenticated) return;
-    
     if (path.startsWith('/lesson/')) {
       const tenseId = path.split('/').pop() || '';
       if (!auth.currentUser?.progress.unlockedTenses.includes(tenseId)) {
-        setErrorMessage(lang === 'uz' ? "Bu dars qulflangan! ⚡ Chaqmoq to'plang." : "Lesson locked! ⚡ Collect XP.");
+        setErrorMessage(lang === 'uz' ? "Dars hali qulflangan! ⚡" : "Lesson is still locked! ⚡");
         setTimeout(() => setErrorMessage(''), 3000);
         return;
       }
     }
-    
     setCurrentPath(path);
     setIsSidebarOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleUnlock = async (tenseId: string) => {
-    if (!auth.currentUser) return;
-    
-    if (auth.currentUser.progress.xp < UNLOCK_COST) {
-      setErrorMessage(lang === 'uz' ? "Chaqmoq yetarli emas! ⚡" : "Not enough XP! ⚡");
+    if (!auth.currentUser || auth.currentUser.progress.xp < UNLOCK_COST) {
+      setErrorMessage(lang === 'uz' ? "XP yetarli emas! ⚡" : "Not enough XP! ⚡");
       setTimeout(() => setErrorMessage(''), 3000);
       return;
     }
-
     const newProgress = {
       ...auth.currentUser.progress,
       xp: auth.currentUser.progress.xp - UNLOCK_COST,
       unlockedTenses: [...auth.currentUser.progress.unlockedTenses, tenseId]
     };
-
-    const success = await db.updateUserProgress(auth.currentUser.username, newProgress);
-    if (success) {
-      const updatedUser = { ...auth.currentUser, progress: newProgress };
-      setAuth(prev => ({ ...prev, currentUser: updatedUser }));
-      localStorage.setItem('tg_current_session', JSON.stringify(updatedUser));
-    }
+    await db.updateUserProgress(auth.currentUser.username, newProgress);
   };
 
   const handleTenseComplete = async (earnedXp: number) => {
     if (!auth.currentUser) return;
     const tenseId = currentPath.split('/').pop() || '';
+    const prev = auth.currentUser.progress;
+    const newCompleted = prev.completedTenses.includes(tenseId) ? prev.completedTenses : [...prev.completedTenses, tenseId];
     
-    const prevProgress = auth.currentUser.progress;
-    const alreadyCompleted = prevProgress.completedTenses.includes(tenseId);
-    const newCompleted = alreadyCompleted ? prevProgress.completedTenses : [...prevProgress.completedTenses, tenseId];
-    
-    let newLevel = prevProgress.level;
-    if (newCompleted.length >= 4 && newLevel === 1) newLevel = 2;
-    if (newCompleted.length >= 8 && newLevel === 2) newLevel = 3;
-    if (newCompleted.length >= 12 && newLevel === 3) newLevel = 4;
+    let newLevel = prev.level;
+    if (newCompleted.length >= 12) newLevel = 4;
+    else if (newCompleted.length >= 8) newLevel = 3;
+    else if (newCompleted.length >= 4) newLevel = 2;
 
-    const newProgress = {
-      ...prevProgress,
+    await db.updateUserProgress(auth.currentUser.username, {
+      ...prev,
       completedTenses: newCompleted,
-      xp: prevProgress.xp + earnedXp,
+      xp: prev.xp + earnedXp,
       level: newLevel
-    };
-
-    const success = await db.updateUserProgress(auth.currentUser.username, newProgress);
-    if (success) {
-      const updatedUser = { ...auth.currentUser, progress: newProgress };
-      setAuth(prev => ({ ...prev, currentUser: updatedUser }));
-      localStorage.setItem('tg_current_session', JSON.stringify(updatedUser));
-      setCurrentPath('/dashboard');
-    }
+    });
+    setCurrentPath('/dashboard');
   };
 
-  const handleEarnXp = async (amount: number) => {
-    if (!auth.currentUser) return;
-    const newProgress = {
-      ...auth.currentUser.progress,
-      xp: auth.currentUser.progress.xp + amount
-    };
-    
-    const success = await db.updateUserProgress(auth.currentUser.username, newProgress);
-    if (success) {
-      const updatedUser = { ...auth.currentUser, progress: newProgress };
-      setAuth(prev => ({ ...prev, currentUser: updatedUser }));
-      localStorage.setItem('tg_current_session', JSON.stringify(updatedUser));
-    }
-  };
-
-  if (showSplash) {
-    return <SplashScreen />;
-  }
-
-  if (!auth.isAuthenticated) {
-    return <AuthPage lang={lang} onLogin={handleLogin} />;
-  }
-
-  if (auth.isAdmin) {
-    return (
-      <div className="min-h-screen flex flex-col bg-slate-50">
-        <Navbar 
-          lang={lang} 
-          setLang={setLang} 
-          progress={{ xp: 9999, streak: 99 } as any} 
-          onLogout={handleLogout}
-        />
-        <AdminPanel lang={lang} onLogout={handleLogout} />
-      </div>
-    );
-  }
-
-  const renderContent = () => {
-    if (!auth.currentUser) return null;
-    const progress = auth.currentUser.progress;
-
-    if (currentPath === '/dashboard') {
-      return (
-        <Dashboard 
-          lang={lang} 
-          progress={progress} 
-          user={auth.currentUser}
-          onNavigate={handleNavigate} 
-          onUnlock={handleUnlock}
-          onLogout={handleLogout}
-        />
-      );
-    }
-    if (currentPath === '/basics') {
-      return <BasicsPage lang={lang} />;
-    }
-    if (currentPath === '/vocabulary') {
-      return (
-        <VocabularyPage 
-          lang={lang} 
-          progress={progress}
-          onEarnXp={handleEarnXp}
-        />
-      );
-    }
-    if (currentPath.startsWith('/lesson/')) {
-      const tenseId = currentPath.split('/').pop() || '';
-      return (
-        <LessonPage 
-          tenseId={tenseId} 
-          lang={lang} 
-          progress={progress}
-          onComplete={handleTenseComplete} 
-        />
-      );
-    }
-    return <Dashboard lang={lang} progress={progress} onNavigate={handleNavigate} onUnlock={handleUnlock} onLogout={handleLogout} />;
-  };
+  if (showSplash) return <SplashScreen />;
+  if (!auth.isAuthenticated) return <AuthPage lang={lang} onLogin={handleLogin} />;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white relative selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="min-h-screen flex flex-col bg-white selection:bg-emerald-100 selection:text-emerald-900">
       {errorMessage && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-rose-600 text-white px-8 py-4 rounded-2xl shadow-2xl font-black text-sm animate-in fade-in slide-in-from-top-4 flex items-center gap-3">
           <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
@@ -232,51 +140,39 @@ const App: React.FC = () => {
       )}
 
       <Navbar 
-        lang={lang} 
-        setLang={setLang} 
-        progress={auth.currentUser!.progress} 
+        lang={lang} setLang={setLang} 
+        progress={auth.isAdmin ? { xp: 9999, streak: 99 } as any : auth.currentUser!.progress} 
         userCode={auth.currentUser?.userCode}
         onLogout={handleLogout}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
       />
       
       <div className="flex-1 flex overflow-hidden relative z-10">
-        <div 
-          className={`fixed inset-0 z-[70] lg:hidden transition-all duration-300 ${isSidebarOpen ? 'opacity-100 pointer-events-auto bg-slate-900/60 backdrop-blur-sm' : 'opacity-0 pointer-events-none'}`}
-          onClick={() => setIsSidebarOpen(false)}
-        >
-          <div 
-            className={`absolute left-0 top-0 w-72 h-full bg-white transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Sidebar 
-              lang={lang} 
-              currentPath={currentPath} 
-              onNavigate={handleNavigate} 
-              unlockedTenses={auth.currentUser!.progress.unlockedTenses}
-              completedTenses={auth.currentUser!.progress.completedTenses} 
-              onClose={() => setIsSidebarOpen(false)} 
-            />
+        <div className={`fixed inset-0 z-[70] lg:hidden transition-all duration-300 ${isSidebarOpen ? 'opacity-100 bg-slate-900/60 backdrop-blur-sm' : 'opacity-0 pointer-events-none'}`} onClick={() => setIsSidebarOpen(false)}>
+          <div className={`absolute left-0 top-0 w-72 h-full bg-white transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`} onClick={e => e.stopPropagation()}>
+            <Sidebar lang={lang} currentPath={currentPath} onNavigate={handleNavigate} unlockedTenses={auth.currentUser!.progress.unlockedTenses} completedTenses={auth.currentUser!.progress.completedTenses} onClose={() => setIsSidebarOpen(false)} />
           </div>
         </div>
 
-        <div className="hidden lg:block border-r border-slate-100">
-          <Sidebar 
-            lang={lang} 
-            currentPath={currentPath} 
-            onNavigate={handleNavigate} 
-            unlockedTenses={auth.currentUser!.progress.unlockedTenses}
-            completedTenses={auth.currentUser!.progress.completedTenses} 
-          />
-        </div>
+        {!auth.isAdmin && (
+          <div className="hidden lg:block border-r border-slate-100">
+            <Sidebar lang={lang} currentPath={currentPath} onNavigate={handleNavigate} unlockedTenses={auth.currentUser!.progress.unlockedTenses} completedTenses={auth.currentUser!.progress.completedTenses} />
+          </div>
+        )}
 
         <main className="flex-1 overflow-y-auto relative bg-slate-50/30">
           <div className="relative z-10 min-h-full">
-            {renderContent()}
+            {auth.isAdmin ? (
+               <AdminPanel lang={lang} onLogout={handleLogout} />
+            ) : (
+               currentPath === '/dashboard' ? <Dashboard lang={lang} progress={auth.currentUser!.progress} user={auth.currentUser!} onNavigate={handleNavigate} onUnlock={handleUnlock} onLogout={handleLogout} /> :
+               currentPath === '/basics' ? <BasicsPage lang={lang} /> :
+               currentPath === '/vocabulary' ? <VocabularyPage lang={lang} progress={auth.currentUser!.progress} onEarnXp={amt => db.updateUserProgress(auth.currentUser!.username, { ...auth.currentUser!.progress, xp: auth.currentUser!.progress.xp + amt })} /> :
+               currentPath.startsWith('/lesson/') ? <LessonPage tenseId={currentPath.split('/').pop() || ''} lang={lang} progress={auth.currentUser!.progress} onComplete={handleTenseComplete} /> : null
+            )}
           </div>
         </main>
       </div>
-
       <PandaMascot lang={lang} />
     </div>
   );
