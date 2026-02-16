@@ -37,9 +37,7 @@ const mockDb = {
 };
 
 if (!supabase) {
-  console.info("💡 Running in Local Storage Mode. Set SUPABASE_URL and SUPABASE_ANON_KEY in Vercel for cloud sync.");
-} else {
-  console.log("✅ Database successfully connected!");
+  console.info("💡 Running in Local Storage Mode.");
 }
 
 export const db = {
@@ -73,7 +71,7 @@ export const db = {
         .eq('username', norm)
         .maybeSingle();
 
-      if (error || !data) return mockDb.getUsers().find(u => u.username === norm) || null;
+      if (error || !data) return null;
 
       return {
         fullName: data.full_name,
@@ -84,7 +82,7 @@ export const db = {
         progress: data.progress
       };
     } catch (err) {
-      return mockDb.getUsers().find(u => u.username === norm) || null;
+      return null;
     }
   },
 
@@ -98,9 +96,6 @@ export const db = {
       return { success: true };
     }
     try {
-      const existing = await this.getUserByUsername(user.username);
-      if (existing) return { success: false, error: "Bu username band!" };
-
       const { error } = await supabase.from('users').insert([{
         username: norm,
         password: user.password,
@@ -109,15 +104,29 @@ export const db = {
         user_code: user.userCode,
         progress: user.progress
       }]);
-
       if (error) throw error;
       return { success: true };
     } catch (err: any) {
-      // Fallback to local if table doesn't exist yet
+      return { success: false, error: err.message };
+    }
+  },
+
+  async deleteUser(username: string): Promise<boolean> {
+    const norm = username.toLowerCase().trim();
+    if (!supabase) {
       const users = mockDb.getUsers();
-      users.push(user);
-      mockDb.saveUsers(users);
-      return { success: true };
+      const filtered = users.filter(u => u.username !== norm);
+      mockDb.saveUsers(filtered);
+      return true;
+    }
+    try {
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('username', norm);
+      return !error;
+    } catch (err) {
+      return false;
     }
   },
 
@@ -136,7 +145,6 @@ export const db = {
         .from('users')
         .update({ progress })
         .eq('username', norm);
-      
       return !error;
     } catch (err) {
       return false;
@@ -154,25 +162,11 @@ export const db = {
       return true;
     }
     try {
-      const { data: user, error: findError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('user_code', code)
-        .maybeSingle();
-
-      if (findError || !user) return false;
-
-      const newProgress = { 
-        ...(user.progress || {}), 
-        xp: (Number(user.progress?.xp) || 0) + Number(amount) 
-      };
-
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ progress: newProgress })
-        .eq('user_code', code);
-
-      return !updateError;
+      const { data: user } = await supabase.from('users').select('*').eq('user_code', code).maybeSingle();
+      if (!user) return false;
+      const newProgress = { ...user.progress, xp: (user.progress.xp || 0) + amount };
+      const { error } = await supabase.from('users').update({ progress: newProgress }).eq('user_code', code);
+      return !error;
     } catch (err) {
       return false;
     }

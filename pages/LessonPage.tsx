@@ -7,7 +7,7 @@ import {
   Play, ChevronRight, ChevronLeft, Sparkles, Lightbulb, 
   HelpCircle, Clock, Info, Target, MessageSquare, Quote
 } from 'lucide-react';
-import { askGrammarAssistant } from '../geminiService';
+import { askGrammarAssistantStream } from '../geminiService';
 
 interface LessonPageProps {
   tenseId: string;
@@ -67,11 +67,23 @@ const LessonPage: React.FC<LessonPageProps> = ({ tenseId, lang, onComplete, prog
   };
 
   const handleAskPanda = async () => {
-    if (!userQuestion.trim()) return;
+    if (!userQuestion.trim() || isAiLoading) return;
     setIsAiLoading(true);
-    const res = await askGrammarAssistant(userQuestion, tense.name.en, lang);
-    setAiAnswer(res);
-    setIsAiLoading(false);
+    setAiAnswer(""); // Reset old answer
+    
+    try {
+      const stream = askGrammarAssistantStream(userQuestion, tense.name.en, lang);
+      let fullText = "";
+      for await (const chunk of stream) {
+        fullText += chunk;
+        setAiAnswer(fullText);
+      }
+    } catch (err) {
+      setAiAnswer("Error.");
+    } finally {
+      setIsAiLoading(false);
+      setUserQuestion("");
+    }
   };
 
   const calculateResults = () => {
@@ -90,7 +102,6 @@ const LessonPage: React.FC<LessonPageProps> = ({ tenseId, lang, onComplete, prog
 
   const results = showResults ? calculateResults() : null;
 
-  // Function to highlight verbs wrapped in ** in sentences
   const formatSentence = (sentence: string, type: 'positive' | 'negative' | 'question') => {
     const parts = sentence.split(/(\*\*.*?\*\*)/);
     const highlightColor = {
@@ -107,7 +118,6 @@ const LessonPage: React.FC<LessonPageProps> = ({ tenseId, lang, onComplete, prog
     });
   };
 
-  // Fixed error by typing ExampleCard as a React.FC to correctly handle the 'key' prop in map()
   const ExampleCard: React.FC<{ ex: TenseExample }> = ({ ex }) => {
     const typeStyles = {
       positive: { border: 'border-l-emerald-500 bg-emerald-50/30', label: 'Positive', labelBg: 'bg-emerald-100 text-emerald-700' },
@@ -165,7 +175,7 @@ const LessonPage: React.FC<LessonPageProps> = ({ tenseId, lang, onComplete, prog
         </div>
       </header>
 
-      {/* Extended Explanation Section */}
+      {/* Deep Dive */}
       <section className="bg-white rounded-[2.5rem] p-8 md:p-12 border border-slate-100 shadow-xl grid grid-cols-1 lg:grid-cols-12 gap-12">
         <div className="lg:col-span-7 space-y-8">
           <div className={`flex items-center gap-4 text-${themeColors}-600`}>
@@ -200,25 +210,16 @@ const LessonPage: React.FC<LessonPageProps> = ({ tenseId, lang, onComplete, prog
                   </li>
                 ))}
               </ul>
-              <div className="pt-4 border-t border-white/10">
-                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Signal Words</span>
-                 <div className="flex flex-wrap gap-2 mt-2">
-                    {tense.signalWords.map(word => (
-                      <span key={word} className={`px-3 py-1 bg-${themeColors}-500/20 text-${themeColors}-200 rounded-lg text-[10px] font-black`}>{word}</span>
-                    ))}
-                 </div>
-              </div>
            </div>
         </div>
       </section>
 
-      {/* Structure Formula Table */}
+      {/* Structure Table */}
       <section className="bg-white rounded-[2.5rem] p-6 md:p-10 border border-slate-100 shadow-xl space-y-8 overflow-hidden">
         <div className="flex items-center gap-3">
            <AlertTriangle className={`text-${themeColors}-500`} size={28} />
            <h2 className="text-2xl md:text-3xl font-black text-slate-900">{strings.structureTable}</h2>
         </div>
-
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -229,52 +230,36 @@ const LessonPage: React.FC<LessonPageProps> = ({ tenseId, lang, onComplete, prog
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              <tr className="group">
-                <td className="px-6 py-8"><span className={`inline-block px-4 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-black uppercase shadow-sm`}>Positive (+)</span></td>
-                <td className="px-6 py-8"><p className="text-lg font-bold text-slate-800">{tense.structure.positive.formula}</p></td>
-                <td className="px-6 py-8"><div className="space-y-1 text-sm font-medium text-slate-500">{tense.structure.positive.rows.map((row, i) => <p key={i}>{row.subject} <span className={`text-${themeColors}-600 font-bold`}>{row.verb}</span>...</p>)}</div></td>
+              <tr>
+                <td className="px-6 py-8"><span className="bg-emerald-600 text-white px-3 py-1 rounded text-[10px] font-black uppercase">Positive (+)</span></td>
+                <td className="px-6 py-8 font-bold">{tense.structure.positive.formula}</td>
+                <td className="px-6 py-8 text-sm">{tense.structure.positive.rows[0].subject} <span className={`text-${themeColors}-600 font-bold`}>{tense.structure.positive.rows[0].verb}</span>...</td>
               </tr>
-              <tr className="group">
-                <td className="px-6 py-8"><span className={`inline-block px-4 py-1.5 bg-rose-600 text-white rounded-lg text-[10px] font-black uppercase shadow-sm`}>Negative (-)</span></td>
-                <td className="px-6 py-8"><p className="text-lg font-bold text-slate-800">{tense.structure.negative.formula}</p></td>
-                <td className="px-6 py-8"><div className="space-y-1 text-sm font-medium text-slate-500">{tense.structure.negative.rows.map((row, i) => <p key={i}>{row.subject} <span className="text-rose-500 font-bold">{row.helper}</span> {row.verb}...</p>)}</div></td>
-              </tr>
-              <tr className="group">
-                <td className="px-6 py-8"><span className={`inline-block px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase shadow-sm`}>Question (?)</span></td>
-                <td className="px-6 py-8"><p className="text-lg font-bold text-slate-800">{tense.structure.question.formula}</p></td>
-                <td className="px-6 py-8"><div className="space-y-1 text-sm font-medium text-slate-500">{tense.structure.question.rows.map((row, i) => <p key={i}><span className={`text-${themeColors}-600 font-bold`}>{row.helper}</span> {row.subject} {row.verb}?</p>)}</div></td>
+              <tr>
+                <td className="px-6 py-8"><span className="bg-rose-600 text-white px-3 py-1 rounded text-[10px] font-black uppercase">Negative (-)</span></td>
+                <td className="px-6 py-8 font-bold">{tense.structure.negative.formula}</td>
+                <td className="px-6 py-8 text-sm">{tense.structure.negative.rows[0].subject} <span className="text-rose-600 font-bold">{tense.structure.negative.rows[0].helper}</span>...</td>
               </tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      {/* Mastery Examples Section */}
+      {/* Mastery Examples */}
       <section className="bg-white rounded-[2.5rem] p-8 md:p-12 border border-slate-100 shadow-xl space-y-8">
-        <div className="space-y-2">
-          <div className="flex items-center gap-4">
-             <div className={`w-12 h-12 bg-${themeColors}-50 text-${themeColors}-600 rounded-2xl flex items-center justify-center shadow-inner`}>
-                <Quote size={24} />
-             </div>
-             <h2 className="text-2xl md:text-3xl font-black text-slate-900">{strings.examples}</h2>
-          </div>
-          <p className="text-slate-400 font-medium px-1">{strings.examplesSub}</p>
-        </div>
-
+        <h2 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-4"><Quote className={`text-${themeColors}-600`} /> {strings.examples}</h2>
         <div className="grid grid-cols-1 gap-4">
-          {tense.examples.map((ex, i) => (
-            <ExampleCard key={i} ex={ex} />
-          ))}
+          {tense.examples.map((ex, i) => <ExampleCard key={i} ex={ex} />)}
         </div>
       </section>
 
-      {/* AI Assistant Box */}
+      {/* AI Assistant Box (STREAMING) */}
       <section className="bg-slate-50 rounded-[2.5rem] p-8 md:p-12 border border-slate-100 space-y-8">
          <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg"><MessageSquare size={28} /></div>
             <div>
                <h2 className="text-2xl font-black text-slate-900">{lang === 'uz' ? 'Panda Ustozdan so\'rang' : 'Ask Panda Teacher'}</h2>
-               <p className="text-slate-500 font-bold text-sm">Ask anything about this specific tense.</p>
+               <p className="text-slate-500 font-bold text-sm">Real-time answers for this tense.</p>
             </div>
          </div>
          <div className="space-y-4">
@@ -283,7 +268,8 @@ const LessonPage: React.FC<LessonPageProps> = ({ tenseId, lang, onComplete, prog
                   type="text" 
                   value={userQuestion}
                   onChange={(e) => setUserQuestion(e.target.value)}
-                  placeholder={lang === 'uz' ? 'Masalan: "He" bilan qanday bo\'ladi?' : 'Ask Panda...'}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAskPanda()}
+                  placeholder={lang === 'uz' ? 'Ingliz tili haqida so\'rang...' : 'Ask Panda...'}
                   className="w-full bg-white border-2 border-slate-200 rounded-2xl px-6 py-5 text-base font-bold focus:outline-none focus:border-slate-900 transition-all pr-32 shadow-sm"
                />
                <button 
@@ -299,7 +285,7 @@ const LessonPage: React.FC<LessonPageProps> = ({ tenseId, lang, onComplete, prog
                   <div className="flex items-center gap-2 text-emerald-600 font-black text-[10px] uppercase mb-2">
                      <Sparkles size={14} /> Panda Teacher:
                   </div>
-                  <p className="text-slate-700 font-medium leading-relaxed">{aiAnswer}</p>
+                  <p className="text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">{aiAnswer}</p>
                </div>
             )}
          </div>
@@ -310,23 +296,19 @@ const LessonPage: React.FC<LessonPageProps> = ({ tenseId, lang, onComplete, prog
         <div className="flex justify-center pt-6">
           <button 
             onClick={handleStartPractice}
-            className={`group relative bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-base shadow-xl hover:scale-105 active:scale-95 transition-all animate-wiggle`}
+            className="group relative bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-base shadow-xl hover:scale-105 active:scale-95 transition-all animate-wiggle"
           >
             <div className="flex items-center gap-3">
               <Play size={18} fill="white" />
               {lang === 'uz' ? 'MASHQNI BOSHLASH' : 'START PRACTICE'}
             </div>
-            <div className={`absolute -top-2 -right-2 bg-${themeColors}-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full border-2 border-white`}>
-              {tense.practice.length} TASKS
-            </div>
           </button>
         </div>
       )}
 
-      {/* Compact Practice Engine */}
+      {/* Practice Engine */}
       {practiceVisible && (
         <section ref={practiceRef} className="bg-slate-900 rounded-[2.5rem] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden border border-slate-800">
-          <div className={`absolute top-0 right-0 w-64 h-64 bg-${themeColors}-500/5 rounded-full blur-[80px] -mr-20 -mt-20`}></div>
           <div className="relative z-10 space-y-6">
             {!showResults ? (
               <>
@@ -334,49 +316,34 @@ const LessonPage: React.FC<LessonPageProps> = ({ tenseId, lang, onComplete, prog
                   <h2 className="text-xl font-black flex items-center gap-2"><Sparkles className={`text-${themeColors}-400`} size={20} /> Practice Mode</h2>
                   <div className="text-[10px] font-black text-slate-500">Question {currentIndex + 1}/{tense.practice.length}</div>
                 </div>
-
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 space-y-6">
-                  <h3 className="text-lg md:text-xl font-black text-slate-100">{tense.practice[currentIndex]?.question || "No more questions."}</h3>
+                  <h3 className="text-lg md:text-xl font-black text-slate-100">{tense.practice[currentIndex]?.question}</h3>
                   <div className="pt-2">
                     {tense.practice[currentIndex]?.type === 'writing' ? (
                       <input 
-                        type="text" autoFocus value={answers[currentIndex] || ''} onChange={(e) => handleWritingChange(e.target.value)} placeholder="Type answer..."
-                        className="w-full bg-slate-800/50 border-2 border-slate-700 rounded-xl px-4 py-3 text-lg font-black focus:outline-none focus:border-emerald-500 transition-all"
+                        type="text" autoFocus value={answers[currentIndex] || ''} onChange={(e) => handleWritingChange(e.target.value)} 
+                        className="w-full bg-slate-800/50 border-2 border-slate-700 rounded-xl px-4 py-3 text-lg font-black focus:outline-none focus:border-emerald-500"
                       />
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {tense.practice[currentIndex]?.options?.map((opt, i) => (
-                          <button key={i} onClick={() => handleOptionSelect(opt)} className={`p-3 rounded-xl border-2 font-black text-base text-left transition-all ${answers[currentIndex] === opt ? `bg-${themeColors}-600 border-${themeColors}-400` : 'bg-slate-800/50 border-slate-700 hover:border-slate-500'}`}>
-                            <span className="mr-2 text-slate-500 text-[10px]">{String.fromCharCode(65 + i)}.</span> {opt}
+                          <button key={i} onClick={() => handleOptionSelect(opt)} className={`p-3 rounded-xl border-2 font-black text-left transition-all ${answers[currentIndex] === opt ? `bg-${themeColors}-600 border-${themeColors}-400` : 'bg-slate-800/50 border-slate-700 hover:border-slate-500'}`}>
+                            {opt}
                           </button>
                         ))}
                       </div>
                     )}
                   </div>
-                  <div className="flex items-start gap-2 text-slate-400 bg-slate-950/40 p-3 rounded-xl border border-white/5 italic text-[10px] font-medium">
-                    <Lightbulb size={12} className="text-amber-500 shrink-0 mt-0.5" />
-                    {lang === 'uz' ? `Maslahat: ${tense.practice[currentIndex]?.hint.uz}` : `Tip: ${tense.practice[currentIndex]?.hint.en}`}
-                  </div>
                 </div>
-
-                <div className="flex justify-between items-center">
-                  <button onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))} disabled={currentIndex === 0} className="px-4 py-2 font-black text-slate-500 hover:text-white disabled:opacity-30 text-xs"><ChevronLeft size={16} /> Previous</button>
-                  <button onClick={() => { if (currentIndex < (tense.practice.length - 1)) setCurrentIndex(currentIndex + 1); else setShowResults(true); }} disabled={!answers[currentIndex]} className={`px-8 py-3 bg-${themeColors}-600 text-white rounded-xl font-black text-sm shadow-lg disabled:opacity-30`}>
-                    {currentIndex === (tense.practice.length - 1) ? 'Finish' : 'Next'} <ChevronRight size={16} />
-                  </button>
+                <div className="flex justify-between">
+                  <button onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))} className="text-xs font-black opacity-50">Back</button>
+                  <button onClick={() => { if (currentIndex < (tense.practice.length - 1)) setCurrentIndex(currentIndex + 1); else setShowResults(true); }} className={`px-8 py-3 bg-${themeColors}-600 rounded-xl font-black`}>Next</button>
                 </div>
               </>
             ) : (
-              <div className="text-center space-y-6">
-                <div className={`w-16 h-16 bg-${themeColors}-500 rounded-2xl mx-auto flex items-center justify-center text-white shadow-xl rotate-3 mb-4`}><Sparkles size={32} fill="white" /></div>
-                <h2 className="text-3xl font-black">Natija: {results?.correct}/{tense.practice.length}</h2>
-                <div className="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 mb-6">
-                    <span className="text-emerald-400 font-black text-xl">+{results?.xpEarned} XP Earned!</span>
-                </div>
-                <div className="flex justify-center gap-3">
-                  <button onClick={() => { setShowResults(false); setCurrentIndex(0); setAnswers(new Array(tense.practice.length).fill('')); }} className="px-6 py-3 bg-slate-800 rounded-xl font-black text-xs">Retry</button>
-                  <button onClick={() => onComplete(results?.xpEarned || 0)} className={`px-8 py-3 bg-${themeColors}-600 rounded-xl font-black text-xs shadow-xl`}>Finish</button>
-                </div>
+              <div className="text-center space-y-6 py-10">
+                <h2 className="text-4xl font-black">Score: {results?.correct}/{tense.practice.length}</h2>
+                <button onClick={() => onComplete(results?.xpEarned || 0)} className={`px-10 py-4 bg-${themeColors}-600 rounded-2xl font-black shadow-2xl`}>Finish & Get XP</button>
               </div>
             )}
           </div>

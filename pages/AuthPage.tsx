@@ -31,12 +31,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
     e.preventDefault();
     setError('');
     
-    if (!supabase) {
-      setError(lang === 'uz' 
-        ? "⚠️ Baza ulanmagan! Kalitlarni tekshirib, Vercel-da 'Redeploy' qiling." 
-        : "⚠️ DB not connected! Check keys and Redeploy in Vercel.");
-      setShowSetupGuide(true);
-      return;
+    if (!supabase && mode !== 'admin') {
+      // Local mode logic handled in database.ts, but we check for Supabase if user expects cloud
     }
 
     setLoading(true);
@@ -82,10 +78,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
       setSuccess(strings.confirmed);
       setTimeout(() => onLogin(newUser), 1500);
     } else {
-      setError(lang === 'uz' 
-        ? `Xatolik: ${result.error}. (Eslatma: Supabase-da SQL Editor-da 'users' jadvalini yaratganingizga ishonch hosil qiling!)` 
-        : `Error: ${result.error}. (Make sure you created 'users' table in Supabase SQL Editor!)`);
-      if (result.error?.includes('404')) setShowSetupGuide(true);
+      setError(result.error || "Error");
     }
     setLoading(false);
   };
@@ -94,12 +87,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
     e.preventDefault();
     setError('');
     
-    if (!supabase && mode !== 'admin') {
-      setError(lang === 'uz' ? "⚠️ Baza ulanmagan! Vercel-da 'Redeploy' qiling." : "⚠️ DB not connected! Redeploy in Vercel.");
-      setShowSetupGuide(true);
-      return;
-    }
-
     setLoading(true);
     const normalizedUsername = username.toLowerCase().trim();
 
@@ -134,7 +121,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
     setMode(newMode);
     setError('');
     setSuccess('');
-    setShowSetupGuide(false);
   };
 
   return (
@@ -159,39 +145,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
            </h1>
            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">TenseGenius Mastery AI</p>
         </div>
-
-        {showSetupGuide && (
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border-4 border-indigo-500 border-dashed animate-in slide-in-from-bottom-8 max-h-[85vh] overflow-y-auto">
-             <div className="flex items-center gap-3 text-indigo-600 mb-6">
-                <div className="p-2 bg-indigo-50 rounded-xl">
-                  <Database size={24} className="animate-pulse" />
-                </div>
-                <div>
-                   <h3 className="font-black text-sm uppercase tracking-widest">Supabase Xatosi (404)</h3>
-                   <p className="text-[10px] text-slate-400 font-bold uppercase">Jadval topilmadi!</p>
-                </div>
-             </div>
-
-             <div className="space-y-6">
-                <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-3">
-                  <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Muhim:</span>
-                  <p className="text-xs font-bold text-white">Supabase SQL Editor-da jadval yaratuvchi kodni ishlatdingizmi?</p>
-                  <ol className="text-[10px] text-slate-400 space-y-1 list-decimal ml-4">
-                    <li>Supabase Dashboard -> SQL Editor</li>
-                    <li>"New Query" tugmasini bosing</li>
-                    <li>SQL kodni ko'chirib o'tkazing va "RUN" bosing</li>
-                  </ol>
-                </div>
-
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl"
-                >
-                  Qayta urinish
-                </button>
-             </div>
-          </div>
-        )}
 
         <div className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-2xl border border-slate-100 relative overflow-hidden">
            {(success || loading) && (
@@ -224,8 +177,13 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
                    </div>
                 </div>
                 <div className="space-y-3">
-                   <a href="https://t.me/sodiqjon_202" target="_blank" rel="noopener noreferrer" className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl">
-                     <MessageCircle size={18} className="text-emerald-400" /> Telegram
+                   <a 
+                    href="https://t.me/sodiqjon_lutfullayevich" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl"
+                   >
+                     <MessageCircle size={18} className="text-emerald-400" /> Telegram Support
                    </a>
                    <button onClick={() => switchMode('login')} className="w-full bg-slate-50 text-slate-500 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-100 transition-all">
                      <ArrowLeft size={14} /> Orqaga

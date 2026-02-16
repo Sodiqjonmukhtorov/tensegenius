@@ -10,26 +10,28 @@ const getAI = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-export async function askGrammarAssistant(question: string, tense: string, lang: Language): Promise<string> {
+// Dars ichidagi yordamchi uchun streaming funksiyasi
+export async function* askGrammarAssistantStream(question: string, tense: string, lang: Language) {
   try {
     const ai = getAI();
-    const response = await ai.models.generateContent({
+    const responseStream = await ai.models.generateContentStream({
       model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: `English tense: ${tense}. Teacher in ${lang}. Question: ${question}` }] }],
+      contents: [{ role: 'user', parts: [{ text: `Tense: ${tense}. Lang: ${lang}. Question: ${question}` }] }],
       config: {
-        systemInstruction: "Expert English teacher. Simple, encouraging, bullet points.",
+        systemInstruction: "English tutor. Ultra-brief. Max 2 sentences. Direct answer.",
         thinkingConfig: { thinkingBudget: 0 },
-        temperature: 0.4,
+        temperature: 0.1,
       }
     });
-    
-    return response.text || "Sorry, try again.";
-  } catch (error: any) {
-    console.error("Grammar Assistant Error:", error);
-    return "Error processing request.";
+    for await (const chunk of responseStream) {
+      if (chunk.text) yield chunk.text;
+    }
+  } catch (error) {
+    yield "Error.";
   }
 }
 
+// Panda Chat uchun streaming
 export async function* chatWithPandaStream(message: string, lang: Language) {
   try {
     const ai = getAI();
@@ -37,30 +39,24 @@ export async function* chatWithPandaStream(message: string, lang: Language) {
       model: 'gemini-3-flash-preview',
       contents: [{ role: 'user', parts: [{ text: message }] }],
       config: {
-        systemInstruction: `Siz Panda Ustozsiz. Qisqa, tez va mehribon javob bering. O'ylab o'tirmang, darhol javobni boshlang.`,
+        systemInstruction: "Panda tutor. Very fast. Brief. Helpful. No fluff.",
         thinkingConfig: { thinkingBudget: 0 },
-        temperature: 0.3, // Tezlik va aniqlik uchun past harorat
+        temperature: 0.1,
       }
     });
-    
     for await (const chunk of responseStream) {
-      if (chunk.text) {
-        yield chunk.text;
-      }
+      if (chunk.text) yield chunk.text;
     }
-  } catch (error: any) {
-    console.error("Panda Stream Error:", error);
-    yield "⚠️ Xatolik.";
+  } catch (error) {
+    yield "Error.";
   }
 }
 
-export async function chatWithPanda(message: string, lang: Language): Promise<string> {
-  let fullText = "";
-  const stream = chatWithPandaStream(message, lang);
-  for await (const chunk of stream) {
-    fullText += chunk;
-  }
-  return fullText;
+// Eski kodlar bilan moslik uchun (legacy)
+export async function askGrammarAssistant(q: string, t: string, l: Language): Promise<string> {
+  let text = "";
+  for await (const chunk of askGrammarAssistantStream(q, t, l)) { text += chunk; }
+  return text;
 }
 
 export async function correctPractice(text: string, tense: string, lang: Language): Promise<FeedbackResult> {
@@ -68,7 +64,7 @@ export async function correctPractice(text: string, tense: string, lang: Languag
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: `Analyze for ${tense}: ${text}` }] }],
+      contents: [{ role: 'user', parts: [{ text: `Fix ${tense}: ${text}` }] }],
       config: {
         thinkingConfig: { thinkingBudget: 0 },
         responseMimeType: "application/json",
@@ -83,30 +79,19 @@ export async function correctPractice(text: string, tense: string, lang: Languag
                 properties: {
                   original: { type: Type.STRING },
                   corrected: { type: Type.STRING },
-                  reason: {
-                    type: Type.OBJECT,
-                    properties: { en: { type: Type.STRING }, uz: { type: Type.STRING } }
-                  }
+                  reason: { type: Type.OBJECT, properties: { en: { type: Type.STRING }, uz: { type: Type.STRING } } }
                 }
               }
             },
-            improvementTips: {
-              type: Type.OBJECT,
-              properties: { en: { type: Type.STRING }, uz: { type: Type.STRING } }
-            }
+            improvementTips: { type: Type.OBJECT, properties: { en: { type: Type.STRING }, uz: { type: Type.STRING } } }
           },
           required: ["score", "mistakes", "improvementTips"]
         }
       }
     });
-
     return JSON.parse(response.text.trim());
   } catch (e) {
-    return {
-      score: 0,
-      mistakes: [],
-      improvementTips: { en: "Error.", uz: "Xatolik." }
-    };
+    return { score: 0, mistakes: [], improvementTips: { en: "Error.", uz: "Xatolik." } };
   }
 }
 
@@ -115,14 +100,11 @@ export async function analyzeFinalTask(text: string, lang: Language): Promise<st
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: `Analyze text: ${text}` }] }],
-      config: {
-        thinkingConfig: { thinkingBudget: 0 }
-      }
+      contents: [{ role: 'user', parts: [{ text: `Analyze: ${text}` }] }],
+      config: { thinkingConfig: { thinkingBudget: 0 } }
     });
-    
-    return response.text || "Analysis failed.";
+    return response.text || "Failed.";
   } catch (error) {
-    return "Could not complete analysis.";
+    return "Error.";
   }
 }
