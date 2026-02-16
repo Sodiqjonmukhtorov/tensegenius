@@ -1,14 +1,21 @@
 
-# 🎯 TenseGenius-ni Bulutli Bazaga Ulash (Global Sinxronizatsiya)
+# 🎯 Global Foydalanuvchilar Bazasi (Supabase ulanishi)
 
-Agar siz Admin panelida hamma foydalanuvchilarni ko'rishni xohlasangiz, quyidagi muhim bosqichlarni bajaring:
+Hamma royxatdan otganlarni korish uchun bu bosqichlarni 100% bajarishingiz shart:
 
-### 1-qadam: Supabase SQL-ni sozlash
-1. [supabase.com](https://supabase.com)ga kiring va loyihangizni oching.
-2. **"SQL Editor"** bo'limiga kiring va quyidagi kodni yuboring (run):
+### 1. Vercel-da kalitlarni sozlang
+Agar loyihangiz Vercel-da bo'lsa:
+1. Vercel dashboard-ga kiring.
+2. **Settings** -> **Environment Variables** bo'limiga o'ting.
+3. Quyidagi 3 ta kalitni qo'shing:
+   - `API_KEY` (Gemini uchun)
+   - `SUPABASE_URL` (Supabase URL)
+   - `SUPABASE_ANON_KEY` (Supabase Anon Key)
+4. Kalitlarni saqlagach, **Deployments** bo'limiga o'ting va oxirgi build-ni **Redeploy** qiling.
 
+### 2. Supabase SQL (Jadval bormi?)
+Supabase-da "SQL Editor" bo'limida ushbu jadval yaratilganini tekshiring:
 ```sql
--- Jadval yaratish
 CREATE TABLE IF NOT EXISTS users (
   id BIGSERIAL PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
@@ -16,22 +23,15 @@ CREATE TABLE IF NOT EXISTS users (
   full_name TEXT NOT NULL,
   phone TEXT NOT NULL,
   user_code TEXT UNIQUE NOT NULL,
-  progress JSONB DEFAULT '{"completedTenses": [], "unlockedTenses": ["pres-simple", "pres-cont", "past-simple"], "xp": 0, "streak": 1, "lastActive": "2024-01-01", "level": 1}'::jsonb,
+  progress JSONB DEFAULT '{"xp":0, "level":1, "completedTenses":[], "unlockedTenses":["pres-simple"]}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
--- Xavfsizlik qoidalarini sozlash
+-- RLS (Xavfsizlik) ochiq bo'lishi shart
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all access" ON users;
-CREATE POLICY "Allow all access" ON users FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all" ON users FOR ALL USING (true) WITH CHECK (true);
 ```
 
-### 2-qadam: Kalitlarni Vercel-ga qo'shish
-Vercel settings (Environment Variables) bo'limida quyidagi kalitlar bo'lishi shart:
-1. `API_KEY` - (Gemini AI kaliti)
-2. `SUPABASE_URL` - (Supabase URL)
-3. `SUPABASE_ANON_KEY` - (Supabase anon kaliti)
-
-**DIQQAT:** Agar saytingizda hali ham "Local Storage Mode" deb chiqayotgan bo'lsa, demak Vercel-dagi kalitlar dasturga yetib bormayapti. Vercel-da kalitlarni saqlagandan keyin saytni "Redeploy" qilishni unutmang.
+### 3. Natijani tekshirish
+Saytga kirganingizda Admin panelning tepasida **"Cloud Sync Active"** (yashil rangda) deb chiqsa, demak hamma royxatdan otganlar sizga korinadi. Agar **"Local Storage Mode"** (sariq rangda) bo'lsa, demak ulanish xato.
 
 Dasturchi: **Sodiqjon Mukhtorov**

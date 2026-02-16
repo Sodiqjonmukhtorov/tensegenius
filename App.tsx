@@ -13,6 +13,7 @@ import AuthPage from './pages/AuthPage';
 import SplashScreen from './components/SplashScreen';
 import AdminPanel from './pages/AdminPanel';
 import { db, supabase } from './database';
+import { Wifi, WifiOff } from 'lucide-react';
 
 const UNLOCK_COST = 200;
 
@@ -140,13 +141,19 @@ const App: React.FC = () => {
   if (!auth.isAuthenticated) return <AuthPage lang={lang} onLogin={handleLogin} />;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="min-h-screen flex flex-col bg-white selection:bg-emerald-100 selection:text-emerald-900 relative">
       {errorMessage && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-rose-600 text-white px-8 py-4 rounded-2xl shadow-2xl font-black text-sm animate-in fade-in slide-in-from-top-4 flex items-center gap-3">
           <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
           {errorMessage}
         </div>
       )}
+
+      {/* Connectivity Badge */}
+      <div className={`fixed bottom-4 left-4 z-[90] flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg border backdrop-blur-md transition-all ${supabase ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 border-rose-500/20'}`}>
+        {supabase ? <Wifi size={12} /> : <WifiOff size={12} />}
+        {supabase ? 'Cloud Persistence Active' : 'Offline Mode (Local Storage)'}
+      </div>
 
       <Navbar 
         lang={lang} setLang={setLang} 

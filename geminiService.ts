@@ -2,57 +2,51 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { FeedbackResult, Language } from "./types";
 
-const getAI = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey === "YOUR_API_KEY_HERE" || apiKey === "") {
-    throw new Error("API_KEY_MISSING");
-  }
-  return new GoogleGenAI({ apiKey });
-};
+// Fixed: Removed local environment search. Adhering to rule: API key must be obtained exclusively from process.env.API_KEY.
 
 // Panda Chat uchun streaming (Optimallashtirilgan)
 export async function* chatWithPandaStream(message: string, lang: Language) {
   try {
-    const ai = getAI();
+    // Fixed: Initializing client with named parameter as required.
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const responseStream = await ai.models.generateContentStream({
       model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: message }] }],
+      contents: message,
       config: {
-        systemInstruction: "You are a very brief English Panda tutor. Max 20 words. Be helpful.",
-        thinkingConfig: { thinkingBudget: 0 },
-        temperature: 0.1,
+        systemInstruction: `You are Panda Ustoz, a friendly and expert English tutor. 
+        Always be encouraging. If the user speaks in Uzbek, you can reply in a mix of English and Uzbek. 
+        Keep answers helpful but concise. Use emojis like 🐾, 🐼, ⚡.`,
+        temperature: 0.7,
       }
     });
     for await (const chunk of responseStream) {
+      // Fixed: chunk.text is a property, not a method.
       if (chunk.text) yield chunk.text;
     }
   } catch (error: any) {
-    if (error.message?.includes('429')) {
-      yield lang === 'uz' ? "Hozir bandman (Limit). 1 daqiqadan so'ng yozing... 🐾" : "I'm busy (Limit). Try in 1 min... 🐾";
-    } else {
-      yield lang === 'uz' ? "Xatolik yuz berdi. 🐾" : "Oops, an error occurred. 🐾";
-    }
+    console.error("Gemini Error:", error);
+    yield lang === 'uz' ? "Kechirasiz, texnik xatolik yuz berdi. 🐾" : "Sorry, a technical error occurred. 🐾";
   }
 }
 
 // Dars ichidagi yordamchi
 export async function* askGrammarAssistantStream(question: string, tense: string, lang: Language) {
   try {
-    const ai = getAI();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const responseStream = await ai.models.generateContentStream({
       model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: `Topic: ${tense}. Q: ${question}` }] }],
+      contents: `Context: English Grammar (${tense}). Question: ${question}`,
       config: {
-        systemInstruction: "Brief English tutor. Max 2 sentences.",
-        thinkingConfig: { thinkingBudget: 0 },
-        temperature: 0.1,
+        systemInstruction: "You are a professional grammar assistant. Explain clearly in 2-3 sentences.",
+        temperature: 0.2,
       }
     });
     for await (const chunk of responseStream) {
+      // Fixed: chunk.text is a property, not a method.
       if (chunk.text) yield chunk.text;
     }
   } catch (error: any) {
-    yield error.message?.includes('429') ? "Limit reached." : "Error.";
+    yield "Error occurred.";
   }
 }
 
@@ -65,12 +59,11 @@ export async function askGrammarAssistant(q: string, t: string, l: Language): Pr
 
 export async function correctPractice(text: string, tense: string, lang: Language): Promise<FeedbackResult> {
   try {
-    const ai = getAI();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: `Fix ${tense}: ${text}` }] }],
+      contents: `As an English teacher, analyze this sentence for ${tense} rules: "${text}"`,
       config: {
-        thinkingConfig: { thinkingBudget: 0 },
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -93,22 +86,25 @@ export async function correctPractice(text: string, tense: string, lang: Languag
         }
       }
     });
-    return JSON.parse(response.text.trim());
+    // Fixed: response.text is a property, not a method.
+    const jsonStr = response.text?.trim() || "{}";
+    return JSON.parse(jsonStr);
   } catch (e) {
-    return { score: 0, mistakes: [], improvementTips: { en: "Error.", uz: "Xatolik." } };
+    return { score: 0, mistakes: [], improvementTips: { en: "Could not analyze the sentence.", uz: "Gapni tahlil qilib bo'lmadi." } };
   }
 }
 
 export async function analyzeFinalTask(text: string, lang: Language): Promise<string> {
   try {
-    const ai = getAI();
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    // Using gemini-3-pro-preview for complex reasoning tasks like detailed essay feedback
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: `Analyze: ${text}` }] }],
-      config: { thinkingConfig: { thinkingBudget: 0 } }
+      model: 'gemini-3-pro-preview',
+      contents: `Provide a detailed English proficiency feedback for this essay: ${text}`,
     });
-    return response.text || "Failed.";
+    // Fixed: response.text is a property, not a method.
+    return response.text || "Analysis failed.";
   } catch (error) {
-    return "Error.";
+    return "Error in AI analysis.";
   }
 }
