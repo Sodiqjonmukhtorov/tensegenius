@@ -1,20 +1,28 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 🎯 TenseGenius-ni Vercel-ga yuklash bo'yicha to'liq qo'llanma
 
-# Run and deploy your AI Studio app
+Tabriklayman! Saytingiz kodi tayyor. Uni Vercel-da to'liq ishlashi (AI bilan birga) uchun quyidagi amallarni bajaring:
 
-This contains everything you need to run your app locally.
+### 1-qadam: GitHub-ga yuklash
+Barcha fayllarni o'z GitHub hisobingizdagi yangi repoga joylang.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1bq0JP9bevjmr2wMUMtKtEn7kI_HjVsk5
+### 2-qadam: Vercel-da API_KEY-ni o'rnatish ⚠️
+Bu eng muhim qadam, aks holda Panda Ustoz javob bermaydi:
+1. [Vercel Dashboard](https://vercel.com/dashboard)ga kiring.
+2. **tensegenius** loyihangizni tanlang.
+3. Yuqoridagi menyudan **"Settings"** (Sozlamalar) tugmasini bosing.
+4. Chap tarafdagi ustundan **"Environment Variables"** bo'limini tanlang.
+5. **Key:** `API_KEY` deb yozing.
+6. **Value:** [aistudio.google.com](https://aistudio.google.com/app/apikey) saytidan olgan maxfiy kalitingizni joylang.
+7. **"Save"** yoki **"Add"** tugmasini bosing.
 
-## Run Locally
+### 3-qadam: Saytni yangilash (Redeploy)
+Sozlamalar saqlangandan so'ng:
+1. **"Deployments"** bo'limiga o'ting.
+2. Eng tepada turgan oxirgi yuklanma (deployment) yonidagi uchta nuqtani bosing.
+3. **"Redeploy"** tugmasini bosing.
 
-**Prerequisites:**  Node.js
+---
+**Eslatma:** Kalitni kodning ichiga yozib yubormang, faqat Vercel Dashboard orqali kiriting. Bu xavfsizlik uchun juda muhim!
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Dasturchi: **Sodiqjon Mukhtorov**
+Platforma: **TenseGenius v2.5**

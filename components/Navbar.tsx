@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UI_STRINGS } from '../constants';
 import { Language, UserProgress } from '../types';
-import { Trophy, Zap, Globe, Menu, Code2, Copy, Check, LogOut, Fingerprint } from 'lucide-react';
+import { Trophy, Zap, Globe, Menu, Code2, Copy, Check, LogOut, Fingerprint, Plus, X, GraduationCap, PenTool, Gift } from 'lucide-react';
 
 interface NavbarProps {
   lang: Language;
@@ -15,6 +15,7 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ lang, setLang, progress, userCode, onLogout, toggleSidebar }) => {
   const strings = UI_STRINGS[lang];
   const [copied, setCopied] = useState(false);
+  const [showXpGuide, setShowXpGuide] = useState(false);
 
   const copyCode = () => {
     if (userCode) {
@@ -24,12 +25,71 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang, progress, userCode, onLo
     }
   };
 
+  const xpGuides = {
+    uz: [
+      { icon: GraduationCap, title: "Darslarni yakunlash", desc: "Har bir muvaffaqiyatli yakunlangan dars uchun XP olasiz.", color: "text-emerald-500" },
+      { icon: PenTool, title: "Lug'at imtihoni", desc: "Lug'at bo'limidagi imtihonda har bir to'g'ri javob uchun +5 XP.", color: "text-indigo-500" },
+      { icon: Gift, title: "Admin sovg'alari", desc: "O'z ID kodingizni adminga bering va bonus XP oling!", color: "text-amber-500" }
+    ],
+    en: [
+      { icon: GraduationCap, title: "Complete Lessons", desc: "Earn XP for every successfully finished lesson/tense.", color: "text-emerald-500" },
+      { icon: PenTool, title: "Vocabulary Exams", desc: "Earn +5 XP for every correct answer in exams.", color: "text-indigo-500" },
+      { icon: Gift, title: "Admin Gifts", desc: "Share your ID with the admin to receive bonus XP!", color: "text-amber-500" }
+    ]
+  };
+
   return (
     <header className="sticky top-0 z-[60] flex flex-col">
+      {/* XP Guide Modal */}
+      {showXpGuide && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowXpGuide(false)}></div>
+          <div className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+             <div className="bg-slate-950 p-8 text-white relative">
+                <button 
+                  onClick={() => setShowXpGuide(false)}
+                  className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-xl transition-colors"
+                >
+                  <X size={20} />
+                </button>
+                <div className="flex items-center gap-4">
+                   <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg rotate-3">
+                      <Zap fill="white" size={24} />
+                   </div>
+                   <div>
+                      <h3 className="text-xl font-black">{lang === 'uz' ? "XP to'plash qo'llanmasi" : "XP Earning Guide"}</h3>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Mastery Program</p>
+                   </div>
+                </div>
+             </div>
+             
+             <div className="p-8 space-y-6">
+                {xpGuides[lang].map((guide, i) => (
+                  <div key={i} className="flex items-start gap-4 group">
+                     <div className={`w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center group-hover:bg-slate-100 transition-colors ${guide.color}`}>
+                        <guide.icon size={24} />
+                     </div>
+                     <div className="space-y-1">
+                        <h4 className="font-black text-slate-900">{guide.title}</h4>
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed">{guide.desc}</p>
+                     </div>
+                  </div>
+                ))}
+
+                <button 
+                  onClick={() => setShowXpGuide(false)}
+                  className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm hover:bg-slate-800 transition-all shadow-xl active:scale-95"
+                >
+                  Tushunarli / Got it!
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
+
       {/* Developer Badge Bar */}
       <div className="w-full bg-slate-950 py-2 px-4 flex justify-center items-center border-b border-slate-800 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500/10 to-transparent animate-pulse"></div>
-        
         <div className="relative flex items-center gap-2">
           <Code2 size={12} className="text-emerald-500" />
           <span className="text-[9px] md:text-[11px] font-black tracking-[0.15em] uppercase text-slate-400">
@@ -77,7 +137,6 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang, progress, userCode, onLo
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
-          {/* User Code - New Highlighted Section */}
           {userCode && (
             <div className="flex items-center gap-1 md:gap-2">
               <div 
@@ -88,10 +147,8 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang, progress, userCode, onLo
                 <span className="text-xs md:text-lg font-mono font-black tracking-wider text-emerald-400">{userCode}</span>
                 {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} className="text-slate-500 group-hover:text-white transition-colors" />}
               </div>
-              
               <button 
                 onClick={onLogout}
-                title={strings.logout}
                 className="p-2 md:p-3 bg-rose-50 text-rose-600 rounded-xl md:rounded-2xl border-2 border-rose-100 hover:bg-rose-600 hover:text-white transition-all shadow-sm"
               >
                 <LogOut size={18} />
@@ -106,9 +163,17 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang, progress, userCode, onLo
               <Trophy size={14} className="md:w-4 md:h-4" />
               <span>{progress.streak}</span>
             </div>
-            <div className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-1.5 md:px-3 md:py-2 rounded-lg md:rounded-xl border border-emerald-100 font-black text-[10px] md:text-xs shadow-sm">
-              <Zap size={14} fill="currentColor" className="md:w-4 md:h-4" />
-              <span>{progress.xp}</span>
+            <div className="flex items-center gap-1 bg-emerald-50 rounded-lg md:rounded-xl border border-emerald-100 shadow-sm overflow-hidden pr-1">
+              <div className="flex items-center gap-1 text-emerald-600 px-2 py-1.5 md:px-3 md:py-2 font-black text-[10px] md:text-xs">
+                <Zap size={14} fill="currentColor" className="md:w-4 md:h-4" />
+                <span>{progress.xp}</span>
+              </div>
+              <button 
+                onClick={() => setShowXpGuide(true)}
+                className="bg-emerald-600 text-white p-1 md:p-1.5 rounded-lg hover:bg-emerald-700 transition-colors shadow-inner"
+              >
+                <Plus size={12} className="stroke-[4px]" />
+              </button>
             </div>
           </div>
 

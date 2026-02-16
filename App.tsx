@@ -15,13 +15,14 @@ import AdminPanel from './pages/AdminPanel';
 const UNLOCK_COST = 200;
 
 const App: React.FC = () => {
-  const [lang, setLang] = useState<Language>('en');
+  const [lang, setLang] = useState<Language>(() => {
+    return (localStorage.getItem('tg_lang') as Language) || 'uz';
+  });
   const [currentPath, setCurrentPath] = useState('/dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showSplash, setShowSplash] = useState(true);
 
-  // Robust session initialization
   const [auth, setAuth] = useState<AuthState>(() => {
     const saved = localStorage.getItem('tg_current_session');
     const isAdmin = localStorage.getItem('tg_admin_mode') === 'true';
@@ -35,7 +36,10 @@ const App: React.FC = () => {
     return { currentUser: null, isAuthenticated: false, isAdmin: false };
   });
 
-  // Sync session and db on every auth change to capture Admin-gifted XP
+  useEffect(() => {
+    localStorage.setItem('tg_lang', lang);
+  }, [lang]);
+
   useEffect(() => {
     if (auth.isAuthenticated && !auth.isAdmin && auth.currentUser) {
       const interval = setInterval(() => {
@@ -64,7 +68,6 @@ const App: React.FC = () => {
 
   const handleLogin = (user: User, isAdmin: boolean = false) => {
     setAuth({ currentUser: user, isAuthenticated: true, isAdmin });
-    // Always persist the current session object
     localStorage.setItem('tg_current_session', JSON.stringify(user));
     localStorage.setItem('tg_admin_mode', isAdmin.toString());
   };
@@ -77,7 +80,7 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 3000);
+    const timer = setTimeout(() => setShowSplash(false), 2500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -87,7 +90,7 @@ const App: React.FC = () => {
     if (path.startsWith('/lesson/')) {
       const tenseId = path.split('/').pop() || '';
       if (!auth.currentUser?.progress.unlockedTenses.includes(tenseId)) {
-        setErrorMessage(lang === 'uz' ? "Bu zamon qulflangan! Chaqmoq to'plang." : "This tense is locked! Collect more XP.");
+        setErrorMessage(lang === 'uz' ? "Bu dars qulflangan! ⚡ Chaqmoq to'plang." : "Lesson locked! ⚡ Collect XP.");
         setTimeout(() => setErrorMessage(''), 3000);
         return;
       }
@@ -95,14 +98,14 @@ const App: React.FC = () => {
     
     setCurrentPath(path);
     setIsSidebarOpen(false);
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleUnlock = (tenseId: string) => {
     if (!auth.currentUser) return;
     
     if (auth.currentUser.progress.xp < UNLOCK_COST) {
-      setErrorMessage(lang === 'uz' ? "Chaqmoq yetarli emas! Chaqmoq to'plang." : "Not enough XP! Collect more lightning.");
+      setErrorMessage(lang === 'uz' ? "Chaqmoq yetarli emas! ⚡" : "Not enough XP! ⚡");
       setTimeout(() => setErrorMessage(''), 3000);
       return;
     }
@@ -145,6 +148,7 @@ const App: React.FC = () => {
 
     setAuth(prev => ({ ...prev, currentUser: updatedUser }));
     syncToDatabase(updatedUser);
+    setCurrentPath('/dashboard');
   };
 
   const handleEarnXp = (amount: number) => {
@@ -174,7 +178,7 @@ const App: React.FC = () => {
         <Navbar 
           lang={lang} 
           setLang={setLang} 
-          progress={{ xp: 0, streak: 0 } as any} 
+          progress={{ xp: 9999, streak: 99 } as any} 
           onLogout={handleLogout}
         />
         <AdminPanel lang={lang} onLogout={handleLogout} />
@@ -225,9 +229,10 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-emerald-50 via-white to-green-50 relative">
+    <div className="min-h-screen flex flex-col bg-white relative selection:bg-emerald-100 selection:text-emerald-900">
       {errorMessage && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-rose-600 text-white px-6 py-3 rounded-2xl shadow-2xl font-black text-sm animate-in fade-in slide-in-from-top-4">
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-rose-600 text-white px-8 py-4 rounded-2xl shadow-2xl font-black text-sm animate-in fade-in slide-in-from-top-4 flex items-center gap-3">
+          <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
           {errorMessage}
         </div>
       )}
@@ -242,11 +247,15 @@ const App: React.FC = () => {
       />
       
       <div className="flex-1 flex overflow-hidden relative z-10">
+        {/* Mobile Sidebar Overlay */}
         <div 
-          className={`fixed inset-0 z-[70] lg:hidden transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+          className={`fixed inset-0 z-[70] lg:hidden transition-all duration-300 ${isSidebarOpen ? 'opacity-100 pointer-events-auto bg-slate-900/60 backdrop-blur-sm' : 'opacity-0 pointer-events-none'}`}
+          onClick={() => setIsSidebarOpen(false)}
         >
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
-          <div className={`absolute left-0 top-0 w-72 h-full bg-white transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div 
+            className={`absolute left-0 top-0 w-72 h-full bg-white transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <Sidebar 
               lang={lang} 
               currentPath={currentPath} 
@@ -258,7 +267,8 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <div className="hidden lg:block">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block border-r border-slate-100">
           <Sidebar 
             lang={lang} 
             currentPath={currentPath} 
@@ -268,8 +278,8 @@ const App: React.FC = () => {
           />
         </div>
 
-        <main className="flex-1 overflow-y-auto relative selection:bg-emerald-200 selection:text-emerald-900">
-          <div className="relative z-10">
+        <main className="flex-1 overflow-y-auto relative bg-slate-50/30">
+          <div className="relative z-10 min-h-full">
             {renderContent()}
           </div>
         </main>

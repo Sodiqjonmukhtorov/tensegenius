@@ -107,7 +107,8 @@ const LessonPage: React.FC<LessonPageProps> = ({ tenseId, lang, onComplete, prog
     });
   };
 
-  const ExampleCard = ({ ex }: { ex: TenseExample }) => {
+  // Fixed error by typing ExampleCard as a React.FC to correctly handle the 'key' prop in map()
+  const ExampleCard: React.FC<{ ex: TenseExample }> = ({ ex }) => {
     const typeStyles = {
       positive: { border: 'border-l-emerald-500 bg-emerald-50/30', label: 'Positive', labelBg: 'bg-emerald-100 text-emerald-700' },
       negative: { border: 'border-l-rose-500 bg-rose-50/30', label: 'Negative', labelBg: 'bg-rose-100 text-rose-700' },
