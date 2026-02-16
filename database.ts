@@ -1,58 +1,42 @@
+
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { User } from './types';
 
-// Environment variable-larni barcha mumkin bo'lgan usullarda qidirish
+// Environment variable-larni o'qish
 const getEnv = (key: string): string => {
   try {
-    // 1. Vite define orqali (Vercel Build vaqtida)
     // @ts-ignore
     const processVal = typeof process !== 'undefined' && process.env ? process.env[key] : undefined;
-    
-    // 2. Vite import.meta.env orqali (Mahalliy va ba'zi buildlar)
-    // Fixed: Cast import.meta to any to resolve TS error about property 'env'
     const metaVal = (import.meta as any).env ? ((import.meta as any).env[key] || (import.meta as any).env[`VITE_${key}`]) : undefined;
-    
     const finalVal = processVal || metaVal || "";
-    
-    return (typeof finalVal === 'string' && finalVal.length > 5 && !finalVal.includes('YOUR_')) 
-      ? finalVal.trim() 
-      : "";
-  } catch (e) {
-    return "";
-  }
+    return (typeof finalVal === 'string' && finalVal.length > 5 && !finalVal.includes('YOUR_')) ? finalVal.trim() : "";
+  } catch (e) { return ""; }
 };
 
 const supabaseUrl = getEnv('SUPABASE_URL');
 const supabaseKey = getEnv('SUPABASE_ANON_KEY');
 
-// Supabase Client yaratish (faqat kalitlar mavjud bo'lsa)
 export const supabase: SupabaseClient | null = (supabaseUrl && supabaseKey) 
   ? createClient(supabaseUrl, supabaseKey) 
   : null;
 
-// Mock Database (Agar Supabase ulanmasa ishlatiladi)
+const STORAGE_KEY = 'tg_mock_users';
+
 const mockDb = {
   getUsers(): User[] {
-    const data = localStorage.getItem('tg_mock_users');
+    const data = localStorage.getItem(STORAGE_KEY);
     if (!data) return [];
-    try { return JSON.parse(data); } catch { return []; }
+    try { 
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
   },
   saveUsers(users: User[]) {
-    localStorage.setItem('tg_mock_users', JSON.stringify(users));
-    window.dispatchEvent(new Event('storage_update'));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+    // Bitta tab ichida sinxronizatsiya uchun
+    window.dispatchEvent(new CustomEvent('local_db_update', { detail: users }));
   }
 };
-
-// Brauzer konsolida (F12) holatni tekshirish uchun
-console.group("📡 TenseGenius Connection Check");
-if (supabase) {
-  console.log("%c[OK] Supabase Cloud Connected!", "color: #10b981; font-weight: bold;");
-} else {
-  console.warn("[FAIL] Supabase keys missing. Running in LOCAL mode.");
-  console.log("URL status:", supabaseUrl ? "Found" : "Missing");
-  console.log("Key status:", supabaseKey ? "Found" : "Missing");
-}
-console.groupEnd();
 
 export const db = {
   async getAllUsers(): Promise<User[]> {
@@ -93,8 +77,8 @@ export const db = {
     if (!supabase) {
       const users = mockDb.getUsers();
       if (users.some(u => u.username === norm)) return { success: false, error: "Username band!" };
-      users.push(user);
-      mockDb.saveUsers(users);
+      const updatedUsers = [...users, user];
+      mockDb.saveUsers(updatedUsers);
       return { success: true };
     }
     try {

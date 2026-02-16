@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Language, User } from '../types';
 import { UI_STRINGS } from '../constants';
-import { CheckCircle2, ArrowRight, ShieldCheck, RefreshCcw, UserPlus, HelpCircle, AlertCircle, MessageCircle } from 'lucide-react';
+import { CheckCircle2, ArrowRight, ShieldCheck, RefreshCcw, UserPlus, HelpCircle, AlertCircle, MessageCircle, LogIn } from 'lucide-react';
 import { db } from '../database';
 
 interface AuthPageProps {
@@ -69,17 +69,15 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
       }
     };
 
+    await new Promise(r => setTimeout(r, 800));
     const result = await db.registerUser(newUser);
     
     if (result.success) {
-      // MUHIM: Loading-ni to'xtatamiz va visual pitichkani yoqamiz
       setLoading(false);
       setSuccess(strings.confirmed);
-      
-      // Majburiy 2.5 soniya visual "Pitichka"ni ko'rsatamiz
       setTimeout(() => {
         onLogin(newUser);
-      }, 2500);
+      }, 2000);
     } else {
       setError(result.error || "Database Error");
       setLoading(false);
@@ -107,7 +105,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
             userCode: '#ADMIN000',
             progress: { completedTenses: [], unlockedTenses: [], xp: 9999, streak: 99, lastActive: new Date().toISOString(), level: 100 }
           }, true);
-        }, 1500);
+        }, 1200);
       } else {
         setError(lang === 'uz' ? "Admin parol xato!" : "Invalid admin password!");
         setLoading(false);
@@ -119,7 +117,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
     if (user && user.password === password) {
       setLoading(false);
       setSuccess("Welcome back!");
-      setTimeout(() => onLogin(user), 1500);
+      setTimeout(() => onLogin(user), 1200);
     } else {
       setError(lang === 'uz' ? "Login yoki parol xato!" : "Invalid login!");
       setLoading(false);
@@ -135,6 +133,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative overflow-hidden">
+      {/* Top Right Admin Toggle */}
       <div className="fixed top-4 right-4 z-[100]">
         <button 
           onClick={() => switchMode(mode === 'admin' ? 'login' : 'admin')}
@@ -152,7 +151,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
            </h1>
         </div>
 
-        <div className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-2xl border border-slate-100 relative overflow-hidden min-h-[400px]">
+        <div className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-2xl border border-slate-100 relative overflow-hidden min-h-[450px]">
+           {/* Loading/Success Overlay */}
            {(success || loading) && (
              <div className="absolute inset-0 z-20 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center space-y-6 animate-in fade-in">
                 {success ? (
@@ -161,12 +161,12 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
                         <CheckCircle2 size={48} className="animate-bounce" />
                      </div>
                      <span className="text-xl font-black text-slate-900 text-center px-6">{success}</span>
-                     <span className="text-xs font-bold text-slate-400 animate-pulse">Entering path...</span>
+                     <span className="text-xs font-bold text-slate-400 animate-pulse">Entering...</span>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-4">
                      <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                     <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Database Sync...</span>
+                     <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Checking Database...</span>
                   </div>
                 )}
              </div>
@@ -196,7 +196,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
              <form onSubmit={(mode === 'login' || mode === 'admin') ? handleLogin : handleRegister} className="space-y-5">
                 <div className="space-y-4">
                    {mode === 'register' && (
-                      <div className="space-y-1">
+                      <div className="space-y-1 animate-in slide-in-from-top-2">
                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Ism-familiya</label>
                          <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full Name" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold focus:outline-none focus:border-slate-900 transition-all shadow-sm" />
                       </div>
@@ -206,7 +206,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
                       <input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} placeholder="username" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold focus:outline-none focus:border-slate-900 transition-all shadow-sm" />
                    </div>
                    {mode === 'register' && (
-                      <div className="space-y-1">
+                      <div className="space-y-1 animate-in slide-in-from-top-2">
                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Telefon</label>
                          <input type="text" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold focus:outline-none focus:border-slate-900 transition-all shadow-sm" />
                       </div>
@@ -221,7 +221,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
                       <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold focus:outline-none focus:border-slate-900 transition-all shadow-sm" />
                    </div>
                    {mode === 'register' && (
-                      <div className="space-y-1">
+                      <div className="space-y-1 animate-in slide-in-from-top-2">
                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Tasdiqlash</label>
                          <input type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold focus:outline-none focus:border-slate-900 transition-all shadow-sm" />
                       </div>
@@ -242,16 +242,34 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
              </form>
            )}
 
+           {/* Fixed Footer Navigation */}
            {mode !== 'reset' && (
-             <div className="mt-8 pt-6 border-t border-slate-50 flex flex-col items-center gap-4">
-                {mode === 'login' ? (
-                  <button onClick={() => switchMode('register')} className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                    <UserPlus size={16} className="text-emerald-500" /> Ro'yxatdan o'tish
-                  </button>
-                ) : (
-                  <button onClick={() => switchMode('login')} className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <RefreshCcw size={16} /> Kirishga qaytish
-                  </button>
+             <div className="mt-8 pt-6 border-t border-slate-50 flex justify-center gap-4">
+                {mode !== 'register' && (
+                   <button 
+                    onClick={() => switchMode('register')} 
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-50 rounded-xl text-[10px] font-black text-slate-600 uppercase tracking-widest hover:bg-emerald-50 hover:text-emerald-600 transition-all"
+                   >
+                    <UserPlus size={16} /> {strings.register}
+                   </button>
+                )}
+                
+                {mode !== 'login' && mode !== 'admin' && (
+                   <button 
+                    onClick={() => switchMode('login')} 
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-50 rounded-xl text-[10px] font-black text-slate-600 uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+                   >
+                    <LogIn size={16} /> {strings.login}
+                   </button>
+                )}
+
+                {mode === 'admin' && (
+                   <button 
+                    onClick={() => switchMode('login')} 
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-50 rounded-xl text-[10px] font-black text-slate-600 uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+                   >
+                    <RefreshCcw size={16} /> {lang === 'uz' ? 'Asosiyga qaytish' : 'Main Login'}
+                   </button>
                 )}
              </div>
            )}
