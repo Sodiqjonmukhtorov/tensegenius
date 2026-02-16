@@ -33,8 +33,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
     
     if (!supabase) {
       setError(lang === 'uz' 
-        ? "⚠️ Baza ulanmagan! Kalitlar koda yetib bormadi. Vercel-da 'Redeploy' tugmasini bosing." 
-        : "⚠️ Database not connected! Keys didn't reach the code. Click 'Redeploy' in Vercel.");
+        ? "⚠️ Baza ulanmagan! Kalitlarni tekshirib, Vercel-da 'Redeploy' qiling." 
+        : "⚠️ DB not connected! Check keys and Redeploy in Vercel.");
       setShowSetupGuide(true);
       return;
     }
@@ -43,7 +43,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
     const normalizedUsername = username.toLowerCase().trim();
 
     if (!validateUsername(normalizedUsername)) {
-      setError(lang === 'uz' ? "Username xato!" : "Invalid username!");
+      setError(lang === 'uz' ? "Username faqat kichik harf va raqamlardan iborat bo'lsin!" : "Username must be lowercase and numbers only!");
       setLoading(false);
       return;
     }
@@ -77,12 +77,15 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
       }
     };
 
-    const registered = await db.registerUser(newUser);
-    if (registered) {
+    const result = await db.registerUser(newUser);
+    if (result.success) {
       setSuccess(strings.confirmed);
       setTimeout(() => onLogin(newUser), 1500);
     } else {
-      setError(lang === 'uz' ? "Baza bilan bog'lanishda xatolik (RLS yoki Table xatosi)." : "DB Connection error (Check RLS or Table).");
+      setError(lang === 'uz' 
+        ? `Xatolik: ${result.error}. (Eslatma: Supabase-da SQL Editor-da 'users' jadvalini yaratganingizga ishonch hosil qiling!)` 
+        : `Error: ${result.error}. (Make sure you created 'users' table in Supabase SQL Editor!)`);
+      if (result.error?.includes('404')) setShowSetupGuide(true);
     }
     setLoading(false);
   };
@@ -136,11 +139,9 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative overflow-hidden">
-      {/* Background decoration */}
       <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[120px] translate-x-1/2 translate-y-1/2"></div>
 
-      {/* FIXED ADMIN BUTTON */}
       <div className="fixed top-4 right-4 md:top-8 md:right-8 z-[100]">
         <button 
           onClick={() => switchMode(mode === 'admin' ? 'login' : 'admin')}
@@ -159,43 +160,34 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">TenseGenius Mastery AI</p>
         </div>
 
-        {/* Improved Setup Guide to match user screenshot */}
-        {showSetupGuide && !supabase && (
+        {showSetupGuide && (
           <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border-4 border-indigo-500 border-dashed animate-in slide-in-from-bottom-8 max-h-[85vh] overflow-y-auto">
              <div className="flex items-center gap-3 text-indigo-600 mb-6">
                 <div className="p-2 bg-indigo-50 rounded-xl">
                   <Database size={24} className="animate-pulse" />
                 </div>
                 <div>
-                   <h3 className="font-black text-sm uppercase tracking-widest">Oxirgi qadamlar</h3>
-                   <p className="text-[10px] text-slate-400 font-bold uppercase">Kalitlar kiritilgan bo'lsa:</p>
+                   <h3 className="font-black text-sm uppercase tracking-widest">Supabase Xatosi (404)</h3>
+                   <p className="text-[10px] text-slate-400 font-bold uppercase">Jadval topilmadi!</p>
                 </div>
              </div>
 
              <div className="space-y-6">
                 <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Vercel:</span>
-                    <span className="text-[8px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-black">REDEPLOY</span>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-xs font-bold text-white">"Deployments" bo'limiga o'ting va oxirgi versiyada "Redeploy" ni bosing.</p>
-                    <p className="text-[10px] text-slate-500 italic">Vite o'zgaruvchilarni ko'rishi uchun loyiha qayta qurilishi (build) shart.</p>
-                  </div>
-                </div>
-
-                <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 flex items-start gap-3">
-                   <Shield size={16} className="text-amber-500 shrink-0" />
-                   <p className="text-[10px] text-slate-600 font-medium leading-relaxed italic">
-                     Agar "Redeploy" qilsangiz ham bu xabar tursa, o'zgaruvchilar nomini tekshiring: SUPABASE_URL, SUPABASE_ANON_KEY va API_KEY bo'lishi kerak.
-                   </p>
+                  <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Muhim:</span>
+                  <p className="text-xs font-bold text-white">Supabase SQL Editor-da jadval yaratuvchi kodni ishlatdingizmi?</p>
+                  <ol className="text-[10px] text-slate-400 space-y-1 list-decimal ml-4">
+                    <li>Supabase Dashboard -> SQL Editor</li>
+                    <li>"New Query" tugmasini bosing</li>
+                    <li>SQL kodni ko'chirib o'tkazing va "RUN" bosing</li>
+                  </ol>
                 </div>
 
                 <button 
                   onClick={() => window.location.reload()}
-                  className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl"
+                  className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl"
                 >
-                  Saytni yangilash
+                  Qayta urinish
                 </button>
              </div>
           </div>
@@ -214,7 +206,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ lang, onLogin }) => {
                 ) : (
                   <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Tekshirilmoqda...</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Ishlanmoqda...</p>
                   </div>
                 )}
              </div>
