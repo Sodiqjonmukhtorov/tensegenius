@@ -2,12 +2,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { FeedbackResult, Language } from "./types";
 
-// Always use named parameter for apiKey and use process.env.API_KEY directly.
-// Best practice: Create a new GoogleGenAI instance right before making an API call.
-
 export async function askGrammarAssistant(question: string, tense: string, lang: Language): Promise<string> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  // Use ai.models.generateContent directly and await it.
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `The user is learning the English tense: ${tense}. 
@@ -15,37 +11,42 @@ export async function askGrammarAssistant(question: string, tense: string, lang:
     Focus on Subject-Verb Agreement (tobelik) and sentence structure.
     Question: ${question}`,
     config: {
-      systemInstruction: "You are an expert English teacher. Use very simple language. Explain 'tobelik' (how verbs depend on subjects) clearly if relevant. Be encouraging.",
+      systemInstruction: "You are an expert English teacher. Use very simple language. Use bullet points for steps. Explain 'tobelik' (how verbs depend on subjects) clearly. Be encouraging.",
     }
   });
   
-  // Access the .text property directly.
   return response.text || "Sorry, I couldn't process that.";
 }
 
 export async function chatWithPanda(message: string, lang: Language): Promise<string> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  // Use ai.models.generateContent directly and await it.
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: message,
     config: {
-      systemInstruction: `You are the mascot of TenseGenius platform. 
-      Your identity: You are "TenseGenius Pandasiman".
-      Your creator: You were created by "Sodiqjon Mukhtorov".
-      Tone: Very cute, friendly, but professional teacher.
-      Specialty: You love explaining Subject-Verb Agreement (Ega va Fe'l moslashuvi).
-      Language: Respond in ${lang === 'uz' ? 'Uzbek' : 'English'}.`,
+      systemInstruction: `Siz TenseGenius platformasining "Panda Ustoz" (Panda Teacher) mascoti hisoblanasiz.
+      Yaratuvchi: Sodiqjon Mukhtorov.
+      
+      JAVOB BERISH QOIDALARI:
+      1. JAVOB FORMATI: Doimo qisqa, tushunarli va ketma-ketlikda (Step-by-step) javob bering.
+      2. MARKDOWN: Bo'limlarni ajratish uchun qalin harflar (**), chiziqlar va nuqtalardan (bullet points) foydalaning.
+      3. BILIM DOIRASI: Faqat zamonlar emas, balki ingliz tili barcha qismlari (IELTS, Speaking, Vocabulary, Grammar) bo'yicha master darajadasiz.
+      4. TIL: Savol qaysi tilda bo'lsa, o'sha tilda javob bering (asosan Uzbek/English).
+      5. TAYYOR SHABLON: 
+         - Kirish (Salomlashish)
+         - Asosiy tushuntirish (Nuqtalar bilan)
+         - Misol (Gaplar)
+         - Maslahat (Teacher's Tip)
+      
+      TONE: Juda mehribon, aqlli va motivatsiya beruvchi. Matnni bir-biriga qo'shib yozmang, oralarini ochiq qoldiring.`,
     }
   });
   
-  // Access the .text property directly.
   return response.text || "Panda biroz charchadi 🐾";
 }
 
 export async function correctPractice(text: string, tense: string, lang: Language): Promise<FeedbackResult> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  // Use ai.models.generateContent directly and await it.
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `Analyze the following sentences focusing on ${tense} and Subject-Verb Agreement.
@@ -93,7 +94,6 @@ export async function correctPractice(text: string, tense: string, lang: Languag
   });
 
   try {
-    // Access the .text property directly.
     return JSON.parse(response.text.trim());
   } catch (e) {
     return {
@@ -106,17 +106,12 @@ export async function correctPractice(text: string, tense: string, lang: Languag
 
 export async function analyzeFinalTask(text: string, lang: Language): Promise<string> {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  // Use ai.models.generateContent directly and await it.
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
     contents: `Full analysis of this 120-180 word text in ${lang === 'uz' ? 'Uzbek' : 'English'}.
     Text: ${text}
     Highlight: Tense usage accuracy, Subject-Verb agreement, and Flow.`,
-    config: {
-      thinkingConfig: { thinkingBudget: 2000 }
-    }
   });
   
-  // Access the .text property directly.
   return response.text || "Analysis failed.";
 }

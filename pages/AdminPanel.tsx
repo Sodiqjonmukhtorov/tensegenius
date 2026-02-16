@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Language, User } from '../types';
 import { UI_STRINGS } from '../constants';
-import { Users, Zap, ShieldCheck, ArrowRight, UserCheck, Phone, LogOut, RefreshCcw, Wifi, WifiOff } from 'lucide-react';
+import { Users, Zap, ShieldCheck, ArrowRight, UserCheck, Phone, LogOut, RefreshCcw, Wifi, WifiOff, Gift, Sparkles } from 'lucide-react';
 import { db, supabase } from '../database';
 
 interface AdminPanelProps {
@@ -19,7 +19,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
   const [status, setStatus] = useState('');
   const [isOnline, setIsOnline] = useState(true);
 
-  // Foydalanuvchilarni bazadan yuklash
   const loadUsers = async () => {
     setLoading(true);
     const data = await db.getAllUsers();
@@ -30,16 +29,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
   useEffect(() => {
     loadUsers();
 
-    // REAL-TIME: Bazadagi 'users' jadvalini kuzatish
     if (supabase) {
       const channel = supabase
         .channel('admin-live-updates')
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'users' },
-          (payload) => {
-            console.log('Baza o\'zgardi, ma\'lumotlar yangilanmoqda...', payload);
-            loadUsers(); // Har qanday o'zgarishda (yangi user yoki XP o'zgarishi) ro'yxatni yangilaymiz
+          () => {
+            loadUsers();
           }
         )
         .subscribe((status) => {
@@ -52,25 +49,39 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
     }
   }, []);
 
-  const handleGiftXP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!giftTargetCode || !giftAmount) return;
+  const handleGiftXP = async (e?: React.FormEvent, manualCode?: string, manualAmount?: number) => {
+    if (e) e.preventDefault();
+    
+    const code = manualCode || giftTargetCode;
+    const amount = manualAmount || giftAmount;
+
+    if (!code.trim() || !amount || amount <= 0) return;
     
     setStatus(lang === 'uz' ? "Yuborilmoqda..." : "Sending...");
     
-    const success = await db.giftXPByCode(giftTargetCode, giftAmount);
+    const success = await db.giftXPByCode(code.trim(), amount);
     if (success) {
-      setStatus(lang === 'uz' ? "XP muvaffaqiyatli yuborildi! ⚡" : "XP successfully sent! ⚡");
-      setGiftAmount(0);
-      setGiftTargetCode('');
-      // loadUsers() chaqirish shart emas, chunki realtime subscription o'zi yangilaydi
+      setStatus(lang === 'uz' ? `⚡ ${amount} XP yuborildi!` : `⚡ ${amount} XP sent!`);
+      if (!manualCode) {
+        setGiftAmount(0);
+        setGiftTargetCode('');
+      }
+      setTimeout(() => setStatus(''), 3000);
     } else {
-      setStatus(lang === 'uz' ? "Xatolik! Foydalanuvchi topilmadi yoki baza ulanmadi." : "Error! User not found or DB disconnected.");
+      setStatus(lang === 'uz' ? "❌ Xatolik yuz berdi!" : "❌ Error occurred!");
+      setTimeout(() => setStatus(''), 3000);
+    }
+  };
+
+  const quickGift = (userCode: string) => {
+    const amount = window.prompt(lang === 'uz' ? "Qancha XP yubormoqchisiz?" : "How much XP to gift?", "500");
+    if (amount && !isNaN(Number(amount))) {
+      handleGiftXP(undefined, userCode, Number(amount));
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-12 space-y-10 animate-in fade-in duration-500 pb-40">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-12 space-y-10 animate-in fade-in duration-500 pb-40">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-2">
            <div className="flex items-center gap-3">
@@ -83,7 +94,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
                 {isOnline ? 'Live' : 'Offline'}
               </div>
            </div>
-           <h1 className="text-4xl font-black text-slate-900">Control Center</h1>
+           <h1 className="text-3xl md:text-4xl font-black text-slate-900">Control Center</h1>
         </div>
         <div className="flex gap-4">
           <button onClick={loadUsers} className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all shadow-sm">
@@ -113,8 +124,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-4">{strings.amount}</label>
                     <input type="number" required value={giftAmount || ''} onChange={(e) => setGiftAmount(parseInt(e.target.value))} placeholder="1000" className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-bold focus:outline-none focus:border-indigo-500" />
                  </div>
-                 {status && <p className={`text-xs font-black text-center ${status.includes('muvaffaqiyatli') || status.includes('successfully') ? 'text-emerald-500' : 'text-rose-500'}`}>{status}</p>}
-                 <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-3">
+                 {status && <p className={`text-xs font-black text-center p-3 rounded-xl ${status.includes('⚡') ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>{status}</p>}
+                 <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 shadow-xl active:scale-95">
                     {strings.send} <ArrowRight size={20} />
                  </button>
               </form>
@@ -126,9 +137,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
               <div className="bg-slate-900 p-8 flex items-center justify-between text-white">
                  <div className="flex items-center gap-4">
                     <Users className="text-emerald-400" />
-                    <h2 className="text-2xl font-black">{strings.usersList}</h2>
+                    <h2 className="text-xl md:text-2xl font-black">{strings.usersList}</h2>
                  </div>
-                 <div className="px-4 py-1.5 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest">{users.length} Users Found</div>
+                 <div className="px-4 py-1.5 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest">{users.length} Users</div>
               </div>
               <div className="overflow-x-auto">
                  <table className="w-full text-left">
@@ -137,6 +148,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
                           <th className="px-8 py-6">User / Code</th>
                           <th className="px-8 py-6">Credentials</th>
                           <th className="px-8 py-6">Stats</th>
+                          <th className="px-8 py-6">Actions</th>
                        </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -161,12 +173,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
                                 </div>
                                 <div className="text-[10px] font-black text-slate-400 uppercase">LVL {u.progress.level}</div>
                              </td>
+                             <td className="px-8 py-6">
+                                <button 
+                                  onClick={() => quickGift(u.userCode)}
+                                  className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center gap-2 font-black text-[10px] uppercase tracking-widest"
+                                >
+                                  <Gift size={16} /> Gift
+                                </button>
+                             </td>
                           </tr>
                        ))}
                     </tbody>
                  </table>
-                 {(users.length === 0 && !loading) && <div className="py-20 text-center text-slate-300 font-black uppercase tracking-widest">Bazadan foydalanuvchilar topilmadi</div>}
-                 {loading && <div className="py-20 text-center text-slate-300 animate-pulse font-black uppercase">Bulutli bazadan yuklanmoqda...</div>}
+                 {(users.length === 0 && !loading) && <div className="py-20 text-center text-slate-300 font-black uppercase tracking-widest">No users found</div>}
+                 {loading && <div className="py-20 text-center text-slate-300 animate-pulse font-black uppercase">Loading from Supabase...</div>}
               </div>
            </div>
         </div>

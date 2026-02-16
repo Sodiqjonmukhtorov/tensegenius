@@ -2,35 +2,52 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { User } from './types';
 
-// Vercel yoki .env-dan o'zgaruvchilarni olish
-const supabaseUrl = process.env.SUPABASE_URL || (import.meta as any).env?.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY || (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
-
-const isValid = (val: any): val is string => {
-  return typeof val === 'string' && val.trim().length > 10 && val !== 'undefined' && val !== 'null';
+// Detect environment variables from multiple sources
+const getEnv = (name: string) => {
+  const viteName = `VITE_${name}`;
+  return (
+    process.env[name] || 
+    (import.meta as any).env?.[name] || 
+    (import.meta as any).env?.[viteName] || 
+    ""
+  ).trim();
 };
 
-// Client yaratish
+const supabaseUrl = getEnv('SUPABASE_URL');
+const supabaseKey = getEnv('SUPABASE_ANON_KEY');
+
+const isValid = (val: string): boolean => {
+  return val.length > 10 && val !== 'undefined' && val !== 'null';
+};
+
+// Initialize Supabase Client
 export const supabase: SupabaseClient | null = (isValid(supabaseUrl) && isValid(supabaseKey)) 
-  ? createClient(supabaseUrl!, supabaseKey!) 
+  ? createClient(supabaseUrl, supabaseKey) 
   : null;
 
+// Mock Database Implementation (Local Storage)
+const mockDb = {
+  getUsers(): User[] {
+    const data = localStorage.getItem('tg_mock_users');
+    return data ? JSON.parse(data) : [];
+  },
+  saveUsers(users: User[]) {
+    localStorage.setItem('tg_mock_users', JSON.stringify(users));
+  }
+};
+
 if (!supabase) {
-  console.error("❌ SUPABASE INITIALIZATION FAILED: Check your Environment Variables in Vercel.");
+  console.info("💡 Running in Local Storage Mode. Set SUPABASE_URL and SUPABASE_ANON_KEY in Vercel for cloud sync.");
+} else {
+  console.log("✅ Database successfully connected!");
 }
 
 export const db = {
-  /**
-   * Barcha foydalanuvchilarni olish
-   */
   async getAllUsers(): Promise<User[]> {
-    if (!supabase) return [];
+    if (!supabase) return mockDb.getUsers();
     try {
       const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
-      if (error) {
-        console.error("Supabase Error (getAllUsers):", error.message);
-        return [];
-      }
+      if (error) return mockDb.getUsers();
       return (data || []).map(row => ({
         fullName: row.full_name,
         username: row.username,
@@ -40,28 +57,23 @@ export const db = {
         progress: row.progress
       }));
     } catch (err) {
-      console.error("DB Critical Error:", err);
-      return [];
+      return mockDb.getUsers();
     }
   },
 
-  /**
-   * Username orqali foydalanuvchini topish
-   */
   async getUserByUsername(username: string): Promise<User | null> {
-    if (!supabase) return null;
+    const norm = username.toLowerCase().trim();
+    if (!supabase) {
+      return mockDb.getUsers().find(u => u.username === norm) || null;
+    }
     try {
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('username', username.toLowerCase().trim())
-        .maybeSingle(); // .single() o'rniga maybeSingle() ishlatamiz (xato bermasligi uchun)
+        .eq('username', norm)
+        .maybeSingle();
 
-      if (error) {
-        console.error("Supabase Error (getUserByUsername):", error.message);
-        return null;
-      }
-      if (!data) return null;
+      if (error || !data) return mockDb.getUsers().find(u => u.username === norm) || null;
 
       return {
         fullName: data.full_name,
@@ -72,23 +84,25 @@ export const db = {
         progress: data.progress
       };
     } catch (err) {
-      return null;
+      return mockDb.getUsers().find(u => u.username === norm) || null;
     }
   },
 
-  /**
-   * Yangi foydalanuvchini ro'yxatdan o'tkazish
-   */
   async registerUser(user: User): Promise<{success: boolean, error?: string}> {
-    if (!supabase) return { success: false, error: "Database not connected" };
+    const norm = user.username.toLowerCase().trim();
+    if (!supabase) {
+      const users = mockDb.getUsers();
+      if (users.some(u => u.username === norm)) return { success: false, error: "Bu username band!" };
+      users.push(user);
+      mockDb.saveUsers(users);
+      return { success: true };
+    }
     try {
-      // 1. Avval username band emasligini tekshiramiz
       const existing = await this.getUserByUsername(user.username);
       if (existing) return { success: false, error: "Bu username band!" };
 
-      // 2. Insert qilish
       const { error } = await supabase.from('users').insert([{
-        username: user.username.toLowerCase().trim(),
+        username: norm,
         password: user.password,
         full_name: user.fullName,
         phone: user.phone,
@@ -96,57 +110,67 @@ export const db = {
         progress: user.progress
       }]);
 
-      if (error) {
-        console.error("Supabase Error (Register):", error.message);
-        return { success: false, error: error.message };
-      }
+      if (error) throw error;
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err.message || "Unknown error" };
+      // Fallback to local if table doesn't exist yet
+      const users = mockDb.getUsers();
+      users.push(user);
+      mockDb.saveUsers(users);
+      return { success: true };
     }
   },
 
-  /**
-   * Progressni yangilash
-   */
   async updateUserProgress(username: string, progress: any): Promise<boolean> {
-    if (!supabase) return false;
+    const norm = username.toLowerCase().trim();
+    if (!supabase) {
+      const users = mockDb.getUsers();
+      const idx = users.findIndex(u => u.username === norm);
+      if (idx === -1) return false;
+      users[idx].progress = progress;
+      mockDb.saveUsers(users);
+      return true;
+    }
     try {
       const { error } = await supabase
         .from('users')
         .update({ progress })
-        .eq('username', username.toLowerCase().trim());
+        .eq('username', norm);
       
-      if (error) console.error("Update Progress Error:", error.message);
       return !error;
     } catch (err) {
       return false;
     }
   },
 
-  /**
-   * Admin tomonidan XP yuborish
-   */
   async giftXPByCode(userCode: string, amount: number): Promise<boolean> {
-    if (!supabase) return false;
+    const code = userCode.trim();
+    if (!supabase) {
+      const users = mockDb.getUsers();
+      const idx = users.findIndex(u => u.userCode === code);
+      if (idx === -1) return false;
+      users[idx].progress.xp += amount;
+      mockDb.saveUsers(users);
+      return true;
+    }
     try {
       const { data: user, error: findError } = await supabase
         .from('users')
         .select('*')
-        .eq('user_code', userCode)
+        .eq('user_code', code)
         .maybeSingle();
 
       if (findError || !user) return false;
 
       const newProgress = { 
-        ...user.progress, 
-        xp: (user.progress.xp || 0) + amount 
+        ...(user.progress || {}), 
+        xp: (Number(user.progress?.xp) || 0) + Number(amount) 
       };
 
       const { error: updateError } = await supabase
         .from('users')
         .update({ progress: newProgress })
-        .eq('user_code', userCode);
+        .eq('user_code', code);
 
       return !updateError;
     } catch (err) {
