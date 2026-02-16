@@ -31,20 +31,30 @@ const mockDb = {
     try { 
       const parsed = JSON.parse(data);
       return Array.isArray(parsed) ? parsed : [];
-    } catch { return []; }
+    } catch { 
+      console.error("Local storage ma'lumotlarini o'qishda xatolik!");
+      return []; 
+    }
   },
   saveUsers(users: User[]) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-    
-    // 1. O'sha oynadagi komponentlarga signal
-    window.dispatchEvent(new CustomEvent('local_db_update', { detail: users }));
-    
-    // 2. Boshqa ochiq oynalarga (tabs) signal
-    syncChannel?.postMessage({ type: 'UPDATE_USERS', data: users });
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+      
+      // 1. O'sha oynadagi komponentlarga signal
+      window.dispatchEvent(new CustomEvent('local_db_update', { detail: users }));
+      
+      // 2. Boshqa ochiq oynalarga (tabs) signal
+      syncChannel?.postMessage({ type: 'UPDATE_USERS', data: users });
+      return true;
+    } catch (e) {
+      console.error("Saqlashda xatolik:", e);
+      return false;
+    }
   }
 };
 
 export const db = {
+  // Barcha foydalanuvchilarni olish
   async getAllUsers(): Promise<User[]> {
     if (!supabase) return mockDb.getUsers();
     try {
@@ -58,9 +68,13 @@ export const db = {
         userCode: row.user_code,
         progress: row.progress
       }));
-    } catch (err) { return mockDb.getUsers(); }
+    } catch (err) { 
+      console.warn("Supabase xatosi, local ma'lumotlarga o'tilmoqda.");
+      return mockDb.getUsers(); 
+    }
   },
 
+  // Username orqali tekshirish
   async getUserByUsername(username: string): Promise<User | null> {
     const norm = username.toLowerCase().trim();
     if (!supabase) return mockDb.getUsers().find(u => u.username === norm) || null;
@@ -78,17 +92,20 @@ export const db = {
     } catch (err) { return null; }
   },
 
+  // Ro'yxatdan o'tkazish (Persistence kafolati bilan)
   async registerUser(user: User): Promise<{success: boolean, error?: string}> {
     const norm = user.username.toLowerCase().trim();
     const localUsers = mockDb.getUsers();
 
     if (localUsers.some(u => u.username === norm)) {
-      return { success: false, error: "Username band!" };
+      return { success: false, error: "Bu username allaqachon mavjud!" };
     }
 
     // Har doim LOCAL xotiraga saqlaymiz (persistence uchun)
     const updatedLocal = [...localUsers, user];
-    mockDb.saveUsers(updatedLocal);
+    const savedLocally = mockDb.saveUsers(updatedLocal);
+
+    if (!savedLocally) return { success: false, error: "Local storage to'lib ketgan yoki xatolik!" };
 
     if (!supabase) return { success: true };
 
@@ -104,11 +121,12 @@ export const db = {
       if (error) throw error;
       return { success: true };
     } catch (err: any) { 
-      return { success: false, error: err.message }; 
+      console.warn("Supabase-ga yozishda xatolik, lekin local saqlandi.");
+      return { success: true }; // Local saqlangani uchun true qaytaramiz
     }
   },
 
-  // Fix: Added missing updateUserProgress method to handle progress updates
+  // Progressni yangilash
   async updateUserProgress(username: string, progress: UserProgress): Promise<boolean> {
     const norm = username.toLowerCase().trim();
     const users = mockDb.getUsers();
@@ -125,6 +143,7 @@ export const db = {
     } catch (err) { return false; }
   },
 
+  // Foydalanuvchini o'chirish
   async deleteUser(username: string): Promise<boolean> {
     const norm = username.toLowerCase().trim();
     const users = mockDb.getUsers().filter(u => u.username !== norm);
@@ -137,6 +156,7 @@ export const db = {
     } catch (err) { return false; }
   },
 
+  // XP sovg'a qilish
   async giftXPByCode(userCode: string, amount: number): Promise<boolean> {
     const users = mockDb.getUsers();
     const idx = users.findIndex(u => u.userCode === userCode);
@@ -154,7 +174,19 @@ export const db = {
     } catch (err) { return false; }
   },
 
-  // Sinxronizatsiya kanali uchun ochiq metod
+  // Ma'lumotlarni eksport qilish (JSON yuklab olish)
+  exportData() {
+    const users = mockDb.getUsers();
+    const blob = new Blob([JSON.stringify(users, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tensegenius_users_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  // Sinxronizatsiya kanali
   onSync(callback: (users: User[]) => void) {
     syncChannel?.addEventListener('message', (event) => {
       if (event.data.type === 'UPDATE_USERS') {
