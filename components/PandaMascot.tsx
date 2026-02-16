@@ -21,12 +21,12 @@ const PandaMascot: React.FC<PandaMascotProps> = ({ lang }) => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [chatHistory]);
+  }, [chatHistory, loading]);
 
   const handleSend = async () => {
     if (!message.trim() || loading) return;
     
-    const userMsg = message;
+    const userMsg = message.trim();
     setMessage('');
     setChatHistory(prev => [...prev, { role: 'user', text: userMsg }]);
     setLoading(true);
@@ -35,13 +35,13 @@ const PandaMascot: React.FC<PandaMascotProps> = ({ lang }) => {
       const response = await chatWithPanda(userMsg, lang);
       setChatHistory(prev => [...prev, { role: 'panda', text: response }]);
     } catch (err) {
-      setChatHistory(prev => [...prev, { role: 'panda', text: "Xatolik yuz berdi 🐾" }]);
+      console.error("Panda Mascot Component Error:", err);
+      setChatHistory(prev => [...prev, { role: 'panda', text: lang === 'uz' ? "Xatolik yuz berdi 🐾 Iltimos, konsolni tekshiring." : "Error occurred 🐾 Please check the console." }]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Simple Markdown-like formatter for bold text and line breaks
   const formatText = (text: string) => {
     return text.split('\n').map((line, i) => (
       <span key={i} className="block mb-1">
