@@ -15,16 +15,15 @@ export async function askGrammarAssistant(question: string, tense: string, lang:
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: `The user is learning the English tense: ${tense}. 
-      Please answer this question as a friendly, beginner-oriented grammar teacher in ${lang === 'uz' ? 'Uzbek' : 'English'}.
-      Question: ${question}` }] }],
+      contents: [{ role: 'user', parts: [{ text: `English tense: ${tense}. Teacher in ${lang}. Question: ${question}` }] }],
       config: {
-        systemInstruction: "You are an expert English teacher. Use very simple language. Use bullet points for steps. Explain clearly. Be encouraging.",
-        temperature: 0.7,
+        systemInstruction: "Expert English teacher. Simple, encouraging, bullet points.",
+        thinkingConfig: { thinkingBudget: 0 },
+        temperature: 0.4,
       }
     });
     
-    return response.text || "Sorry, I couldn't process that.";
+    return response.text || "Sorry, try again.";
   } catch (error: any) {
     console.error("Grammar Assistant Error:", error);
     return "Error processing request.";
@@ -38,10 +37,9 @@ export async function* chatWithPandaStream(message: string, lang: Language) {
       model: 'gemini-3-flash-preview',
       contents: [{ role: 'user', parts: [{ text: message }] }],
       config: {
-        systemInstruction: `Siz TenseGenius platformasining "Panda Ustoz" mascoti hisoblanasiz. 
-        Juda tez, qisqa va tushunarli javob bering. Markdown ishlating. 
-        Har doim foydalanuvchini ruhlantiring.`,
-        temperature: 0.5, // Tezlik uchun aniqroq javoblar
+        systemInstruction: `Siz Panda Ustozsiz. Qisqa, tez va mehribon javob bering. O'ylab o'tirmang, darhol javobni boshlang.`,
+        thinkingConfig: { thinkingBudget: 0 },
+        temperature: 0.3, // Tezlik va aniqlik uchun past harorat
       }
     });
     
@@ -52,12 +50,11 @@ export async function* chatWithPandaStream(message: string, lang: Language) {
     }
   } catch (error: any) {
     console.error("Panda Stream Error:", error);
-    yield "⚠️ Error occurred.";
+    yield "⚠️ Xatolik.";
   }
 }
 
 export async function chatWithPanda(message: string, lang: Language): Promise<string> {
-  // Legacy support
   let fullText = "";
   const stream = chatWithPandaStream(message, lang);
   for await (const chunk of stream) {
@@ -71,9 +68,9 @@ export async function correctPractice(text: string, tense: string, lang: Languag
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: `Analyze the following sentences focusing on ${tense}.
-      Sentences: ${text}` }] }],
+      contents: [{ role: 'user', parts: [{ text: `Analyze for ${tense}: ${text}` }] }],
       config: {
+        thinkingConfig: { thinkingBudget: 0 },
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -108,7 +105,7 @@ export async function correctPractice(text: string, tense: string, lang: Languag
     return {
       score: 0,
       mistakes: [],
-      improvementTips: { en: "An error occurred.", uz: "Xatolik yuz berdi." }
+      improvementTips: { en: "Error.", uz: "Xatolik." }
     };
   }
 }
@@ -117,8 +114,11 @@ export async function analyzeFinalTask(text: string, lang: Language): Promise<st
   try {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview', // Speed over Pro
-      contents: [{ role: 'user', parts: [{ text: `Full analysis in ${lang === 'uz' ? 'Uzbek' : 'English'}: ${text}` }] }],
+      model: 'gemini-3-flash-preview',
+      contents: [{ role: 'user', parts: [{ text: `Analyze text: ${text}` }] }],
+      config: {
+        thinkingConfig: { thinkingBudget: 0 }
+      }
     });
     
     return response.text || "Analysis failed.";
