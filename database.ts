@@ -2,11 +2,13 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { User } from './types';
 
-// Detect environment variables from Vite's define or process.env
+// Muhit o'zgaruvchilarini olish
 const getEnv = (key: string): string => {
   try {
-    // @ts-ignore - process.env might be defined by Vite
-    return (process.env[key] || "").trim();
+    // Vite 'define' orqali kelgan qiymatlarni tekshirish
+    // @ts-ignore
+    const val = process.env[key];
+    return (val && val !== 'undefined') ? val.trim() : "";
   } catch {
     return "";
   }
@@ -15,17 +17,17 @@ const getEnv = (key: string): string => {
 const supabaseUrl = getEnv('SUPABASE_URL');
 const supabaseKey = getEnv('SUPABASE_ANON_KEY');
 
-// Enhanced validation for Supabase credentials
+// Kalitlarni tekshirish mantiqi
 const isConfigured = (val: string): boolean => {
-  return typeof val === 'string' && val.length > 10 && !val.includes('YOUR_') && val !== 'undefined';
+  return typeof val === 'string' && val.length > 15 && !val.includes('YOUR_');
 };
 
-// Initialize Supabase Client
+// Supabase Client-ni yaratish
 export const supabase: SupabaseClient | null = (isConfigured(supabaseUrl) && isConfigured(supabaseKey)) 
   ? createClient(supabaseUrl, supabaseKey) 
   : null;
 
-// Mock Database Implementation (Local Storage Fallback)
+// Mock Database (Faqat bitta brauzer uchun fallback)
 const mockDb = {
   getUsers(): User[] {
     const data = localStorage.getItem('tg_mock_users');
@@ -36,16 +38,14 @@ const mockDb = {
   }
 };
 
-// Log current storage mode for developers without using console.error for expected missing config
-console.group("📡 TenseGenius Data Connectivity");
+// Console log orqali holatni bildirish
 if (supabase) {
-  console.info("✅ Status: CLOUD SYNC ACTIVE");
-  console.info("📍 Provider: Supabase");
+  console.log("%c✅ TenseGenius: CLOUD SYNC ACTIVE (Supabase connected)", "color: #10b981; font-weight: bold;");
 } else {
-  console.warn("⚠️ Status: LOCAL STORAGE MODE");
-  console.info("ℹ️ Note: Global user sync is disabled because SUPABASE_URL/KEY are not set in environment variables.");
+  console.log("%c⚠️ TenseGenius: LOCAL STORAGE MODE (Data is not shared across devices)", "color: #f59e0b; font-weight: bold;");
+  if (!isConfigured(supabaseUrl)) console.warn("Missing: SUPABASE_URL");
+  if (!isConfigured(supabaseKey)) console.warn("Missing: SUPABASE_ANON_KEY");
 }
-console.groupEnd();
 
 export const db = {
   async getAllUsers(): Promise<User[]> {
@@ -67,7 +67,7 @@ export const db = {
         progress: row.progress
       }));
     } catch (err) {
-      console.warn("Supabase fetch failed, falling back to local storage:", err);
+      console.error("Supabase fetch error:", err);
       return mockDb.getUsers();
     }
   },
@@ -93,16 +93,14 @@ export const db = {
         userCode: data.user_code,
         progress: data.progress
       };
-    } catch (err) {
-      return null;
-    }
+    } catch (err) { return null; }
   },
 
   async registerUser(user: User): Promise<{success: boolean, error?: string}> {
     const norm = user.username.toLowerCase().trim();
     if (!supabase) {
       const users = mockDb.getUsers();
-      if (users.some(u => u.username === norm)) return { success: false, error: "Bu username band!" };
+      if (users.some(u => u.username === norm)) return { success: false, error: "Username band!" };
       users.push(user);
       mockDb.saveUsers(users);
       return { success: true };
@@ -136,14 +134,9 @@ export const db = {
     }
     
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ progress })
-        .eq('username', norm);
+      const { error } = await supabase.from('users').update({ progress }).eq('username', norm);
       return !error;
-    } catch (err) {
-      return false;
-    }
+    } catch (err) { return false; }
   },
 
   async deleteUser(username: string): Promise<boolean> {
@@ -153,16 +146,10 @@ export const db = {
       mockDb.saveUsers(users);
       return true;
     }
-    
     try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('username', norm);
+      const { error } = await supabase.from('users').delete().eq('username', norm);
       return !error;
-    } catch (err) {
-      return false;
-    }
+    } catch (err) { return false; }
   },
 
   async giftXPByCode(userCode: string, amount: number): Promise<boolean> {
@@ -174,15 +161,12 @@ export const db = {
       mockDb.saveUsers(users);
       return true;
     }
-    
     try {
-      const { data: user } = await supabase.from('users').select('*').eq('user_code', userCode).maybeSingle();
-      if (!user) return false;
-      const newProgress = { ...user.progress, xp: (user.progress.xp || 0) + amount };
+      const { data } = await supabase.from('users').select('*').eq('user_code', userCode).maybeSingle();
+      if (!data) return false;
+      const newProgress = { ...data.progress, xp: (data.progress.xp || 0) + amount };
       const { error } = await supabase.from('users').update({ progress: newProgress }).eq('user_code', userCode);
       return !error;
-    } catch (err) {
-      return false;
-    }
+    } catch (err) { return false; }
   }
 };
